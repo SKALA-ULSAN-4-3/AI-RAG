@@ -1,0 +1,251 @@
+{
+  "schema_version": "2.0",
+  "target_domain": "Semiconductor",
+  "data_origin": "VERIFIED_WEB_RESEARCH",
+  "compiled_at": "2026-09-29",
+  "verification_policy": "Official company pages and recent funding announcements were checked. NONE_CONFIRMED means no completed IPO or acquisition was found in the cited current company/funding sources as of accessed_at; it is not a guarantee about undisclosed transactions.",
+  "targets": {"KR": 10, "OVERSEAS": 10},
+  "companies": [
+    {
+      "name": "Mobilint", "aliases": ["모빌린트"], "country": "KR", "region": "KR",
+      "website": "https://www.mobilint.com", "website_verified": true, "founded_year": 2019,
+      "main_products": ["ARIES edge NPU", "REGULUS standalone AI SoC", "MLX-A1 Edge AI Box"],
+      "funding_stage": "SERIES_C", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["mobilint_src_001", "mobilint_src_002"],
+      "sources": [
+        {"source_id":"mobilint_src_001","url":"https://www.mobilint.com/about","title":"About us | Mobilint","publisher":"Mobilint","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official history states establishment in 2019 and describes ARIES, REGULUS and edge-AI NPU products.","supports":["company_identity","founded_year","product","ai_core_business"],"url_fetched":true,"is_mock":false},
+        {"source_id":"mobilint_src_002","url":"https://en.wowtale.net/2026/04/07/233820","title":"Mobilint Raises $46.4M Series C","publisher":"WOWTALE","published_at":"2026-04-07","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Reports Mobilint's completed Series C financing and continued operation as a privately funded AI-chip startup.","supports":["funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "HyperAccel", "aliases": ["하이퍼엑셀"], "country": "KR", "region": "KR",
+      "website": "https://hyperaccel.ai", "website_verified": true, "founded_year": 2023,
+      "main_products": ["Bertha LLM accelerator", "LPU-based LLM inference server solution"],
+      "funding_stage": "SERIES_B", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["hyperaccel_src_001", "hyperaccel_src_002"],
+      "sources": [
+        {"source_id":"hyperaccel_src_001","url":"https://hyperaccel.ai/company/newsroom/","title":"HyperAccel Newsroom","publisher":"HyperAccel","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official newsroom describes the Korean startup's Bertha LLM-specific accelerator and LPU products.","supports":["company_identity","product","ai_core_business"],"url_fetched":true,"is_mock":false},
+        {"source_id":"hyperaccel_src_002","url":"https://biz.chosun.com/en/en-finance/2026/09/11/NH2KHXBGQFF6LGWCKEALS3TQIA","title":"HyperAccel raises Series B funding","publisher":"ChosunBiz","published_at":"2026-09-11","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Reports the company's Series B financing and states it launched in January 2023 as an AI-accelerator semiconductor startup.","supports":["founded_year","funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Panmnesia", "aliases": ["파네시아"], "country": "KR", "region": "KR",
+      "website": "https://panmnesia.com", "website_verified": true, "founded_year": 2022,
+      "main_products": ["CXL switch SoC", "CXL 3.x IP", "GPU memory expansion kit"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["panmnesia_src_001", "panmnesia_src_002"],
+      "sources": [
+        {"source_id":"panmnesia_src_001","url":"https://panmnesia.com/about/?active=about_vision","title":"About us | Panmnesia","publisher":"Panmnesia","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page states the company was established in 2022 and lists current CXL products for AI infrastructure.","supports":["company_identity","founded_year","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"panmnesia_src_002","url":"https://panmnesia.com/news/en/2024-11-18-series-a-funding","title":"Panmnesia Secures Over $60M Series A","publisher":"Panmnesia","published_at":"2024-11-18","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official announcement records the completed Series A round; the current company history continues to list Series A as its equity stage.","supports":["funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "XCENA", "aliases": ["엑시나", "MetisX", "메티스엑스"], "country": "KR", "region": "KR",
+      "website": "https://xcena.com", "website_verified": true, "founded_year": 2022,
+      "main_products": ["CXL intelligent-memory ASIC", "memory-centric AI data-processing platform"],
+      "funding_stage": "SERIES_B", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["xcena_src_001", "xcena_src_002"],
+      "sources": [
+        {"source_id":"xcena_src_001","url":"https://www.prnewswire.com/news-releases/metisx-rebrands-as-xcena-reflecting-a-bold-vision-for-the-future-of-computing-architecture-302332117.html","title":"MetisX Rebrands as XCENA","publisher":"XCENA / PR Newswire","published_at":"2024-12-16","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Company release states XCENA was founded in 2022 and develops CXL intelligent-memory solutions and an ASIC.","supports":["company_identity","founded_year","product","ai_core_business"],"url_fetched":true,"is_mock":false},
+        {"source_id":"xcena_src_002","url":"https://mlq.ai/news/xcena-raises-135m-in-memory-centric-ai-chip","title":"XCENA Raises $135M Series B","publisher":"MLQ","published_at":"2026-09-01","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Reports a completed Series B for the active private memory-centric AI-chip company.","supports":["funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "BOS Semiconductors", "aliases": ["보스반도체"], "country": "KR", "region": "KR",
+      "website": "https://www.bos-semi.com", "website_verified": true, "founded_year": 2022,
+      "main_products": ["Eagle-N automotive AI accelerator", "automotive and robotics semiconductor solutions"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["bos_src_001", "bos_src_002"],
+      "sources": [
+        {"source_id":"bos_src_001","url":"https://www.bos-semi.com/about-us","title":"About us | BOS Semiconductors","publisher":"BOS Semiconductors","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page describes semiconductor solutions for autonomous mobility and robotics.","supports":["company_identity","product","ai_core_business"],"url_fetched":true,"is_mock":false},
+        {"source_id":"bos_src_002","url":"https://www.bos-semi.com/post/bos-secures-approximately-67-million-in-series-a-funding-to-accelerate-automotive-ai-innovation","title":"BOS Secures Series A Funding","publisher":"BOS Semiconductors","published_at":"2026-02-01","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official funding announcement identifies the company as founded in 2022 and records its Series A for automotive AI chips.","supports":["founded_year","funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "iHW", "aliases": ["아이에이치더블유"], "country": "KR", "region": "KR",
+      "website": "https://ihw-ai.com", "website_verified": true, "founded_year": 2024,
+      "main_products": ["INFERTRON analog compute-in-memory AI SoC"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["ihw_src_001", "ihw_src_002"],
+      "sources": [
+        {"source_id":"ihw_src_001","url":"https://kr.linkedin.com/company/inthw","title":"iHW company profile","publisher":"iHW / LinkedIn","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Company profile identifies a privately held company founded in 2024 and its ACiM AI-semiconductor specialization.","supports":["company_identity","founded_year","product","ai_core_business","public_listing"],"url_fetched":true,"is_mock":false},
+        {"source_id":"ihw_src_002","url":"https://en.sedaily.com/finance/2026/08/19/low-power-ai-chip-startup-ihw-raises-52-billion-won-in","title":"iHW Raises Series A","publisher":"Seoul Economic Daily","published_at":"2026-08-19","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Reports the completed Series A and active development of the INFERTRON ACiM chip.","supports":["funding_stage","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "MangoBoost", "aliases": ["망고부스트"], "country": "KR", "region": "KR",
+      "website": "https://www.mangoboost.io", "website_verified": true, "founded_year": 2022,
+      "main_products": ["MangoBoost DPU", "agentic-AI full-stack infrastructure"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["mangoboost_src_001", "mangoboost_src_002"],
+      "sources": [
+        {"source_id":"mangoboost_src_001","url":"https://www.mangoboost.io/company/about","title":"About MangoBoost","publisher":"MangoBoost","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Current official page states the company was founded in 2022 and develops DPU and full-stack AI infrastructure.","supports":["company_identity","founded_year","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"mangoboost_src_002","url":"https://www.mangoboost.io/company/newsroom/announcing-our-closing-of-series-a-funding-round-and-way-forward","title":"MangoBoost closes Series A","publisher":"MangoBoost","published_at":"2023-11-10","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official announcement records the completed $55M Series A; the current official profile still lists Series A as the latest stage.","supports":["funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Articron", "aliases": ["아티크론"], "country": "KR", "region": "KR",
+      "website": "https://articron.com", "website_verified": true, "founded_year": 2023,
+      "main_products": ["ART SRAM-CIM NPU IP", "DALUS circuit-design automation tools"],
+      "funding_stage": "PRE_SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["articron_src_001", "articron_src_002"],
+      "sources": [
+        {"source_id":"articron_src_001","url":"https://articron.com/company","title":"Company | Articron","publisher":"Articron","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official history states founding in 2023, a completed Pre-A round in April 2026, and SRAM-CIM AI-chip IP products.","supports":["company_identity","founded_year","product","ai_core_business","funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"articron_src_002","url":"https://www.yonsei.ac.kr/sc/298/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGc2MlMkY1MCUyRjY4MDAyOSUyRmFydGNsVmlldy5kbyUzRg%3D%3D","title":"Articron AI semiconductor IP","publisher":"Yonsei University","published_at":"2025-02-01","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"University release describes ART edge-AI IP, DALUS tools and the company's founding and early investment.","supports":["founded_year","product","ai_core_business"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Pebble Square", "aliases": ["페블스퀘어"], "country": "KR", "region": "KR",
+      "website": "https://www.pebble-square.com", "website_verified": true, "founded_year": 2021,
+      "main_products": ["Analog-PIM neuromorphic AI accelerator", "AI-chip IP and optimized edge-AI solutions"],
+      "funding_stage": "PRE_SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["pebble_src_001", "pebble_src_002"],
+      "sources": [
+        {"source_id":"pebble_src_001","url":"https://www.pebble-square.com/en/","title":"Pebble Square","publisher":"Pebble Square","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official site describes Analog-PIM AI chips, IP licensing, AI algorithms and edge-AI solutions.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"pebble_src_002","url":"https://pebble-square.com/en/square_center_en/4","title":"Pebble Square pre-A investment","publisher":"Pebble Square","published_at":"2025-03-10","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Company-hosted article states the fabless startup was established in 2021 and was raising a pre-A round for neuromorphic AI chips.","supports":["founded_year","funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Semunite", "aliases": ["세뮤나이트"], "country": "KR", "region": "KR",
+      "website": "https://semunite.com", "website_verified": true, "founded_year": 2025,
+      "main_products": ["PIM-like NPU IP", "SeM-V1 always-on voice-agent AI SoC", "SUAI NPU test silicon"],
+      "funding_stage": "SEED", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["semunite_src_001", "semunite_src_002"],
+      "sources": [
+        {"source_id":"semunite_src_001","url":"https://semunite.com/pages/company-overview-en.html","title":"Semunite History","publisher":"Semunite","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official history states that Semunite was founded in August 2025 as an AI-system-semiconductor fabless company and secured Seed investment in October 2025.","supports":["company_identity","founded_year","funding_stage","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"semunite_src_002","url":"https://semunite.com/pages/ai-soc-en.html","title":"Semunite AI SoC","publisher":"Semunite","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official product page describes SeM-V1, its always-on voice-agent AI SoC, and distinguishes it from the SUAI NPU test chip.","supports":["product","ai_core_business"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "d-Matrix", "aliases": ["dMatrix"], "country": "US", "region": "OVERSEAS",
+      "website": "https://www.d-matrix.ai", "website_verified": true, "founded_year": 2019,
+      "main_products": ["Corsair inference accelerators", "JetStream networking accelerators", "Aviator software stack"],
+      "funding_stage": "SERIES_C", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["dmatrix_src_001", "dmatrix_src_002"],
+      "sources": [
+        {"source_id":"dmatrix_src_001","url":"https://www.d-matrix.ai/about/","title":"About d-Matrix","publisher":"d-Matrix","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page describes the company's generative-AI inference compute platform and current operation.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"dmatrix_src_002","url":"https://www.d-matrix.ai/announcements/d-matrix-raises-275-million-to-power-the-age-of-ai-inference/","title":"d-Matrix Raises $275M Series C","publisher":"d-Matrix","published_at":"2025-11-12","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release states founded in 2019, completed Series C, and lists Corsair, JetStream and Aviator products.","supports":["founded_year","funding_stage","product"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Axelera AI", "aliases": ["Axelera"], "country": "NL", "region": "OVERSEAS",
+      "website": "https://axelera.ai", "website_verified": true, "founded_year": 2021,
+      "main_products": ["Metis AI Platform", "Europa AI processing unit", "Voyager SDK"],
+      "funding_stage": "SERIES_C", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["axelera_src_001", "axelera_src_002"],
+      "sources": [
+        {"source_id":"axelera_src_001","url":"https://axelera.ai/our-story","title":"Our Story | Axelera AI","publisher":"Axelera AI","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page states incorporation in July 2021 and describes Metis, Europa, Titania and Voyager products.","supports":["company_identity","founded_year","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"axelera_src_002","url":"https://axelera.ai/news/axelera-ai-secures-more-than-250-million-funding-on-global-commercial-growth","title":"Axelera AI Secures Series C Funding","publisher":"Axelera AI","published_at":"2026-02-24","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release identifies the financing as Series C and confirms continued private commercial growth.","supports":["funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Avicena", "aliases": ["Avicena Tech"], "country": "US", "region": "OVERSEAS",
+      "website": "https://avicena.tech", "website_verified": true, "founded_year": 2019,
+      "main_products": ["LightBundle microLED optical interconnect", "chip-to-chip photonic I/O"],
+      "funding_stage": "SERIES_B", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["avicena_src_001", "avicena_src_002"],
+      "sources": [
+        {"source_id":"avicena_src_001","url":"https://avicena.tech/","title":"Avicena microLED interconnects","publisher":"Avicena","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official site describes LightBundle chip-to-chip optical interconnects for AI and HPC systems.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"avicena_src_002","url":"https://avicena.tech/avicena-announces-series-b-funding-round-led-by-tiger-global-with-participation-from-sk-hynix","title":"Avicena Announces Series B","publisher":"Avicena","published_at":"2025-05-14","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records the completed Series B; company materials trace operations to 2019.","supports":["founded_year","funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Eliyan", "aliases": [], "country": "US", "region": "OVERSEAS",
+      "website": "https://eliyan.com", "website_verified": true, "founded_year": 2021,
+      "main_products": ["NuLink die-to-die PHY", "NuLink-X chip-to-chip PHY", "NuLink-XD electro-optical SerDes"],
+      "funding_stage": "SERIES_C", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["eliyan_src_001", "eliyan_src_002"],
+      "sources": [
+        {"source_id":"eliyan_src_001","url":"https://eliyan.com/about/","title":"About Eliyan","publisher":"Eliyan","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page describes NuLink interconnect products; corporate registration records creation in 2021.","supports":["company_identity","founded_year","product","ai_core_business"],"url_fetched":true,"is_mock":false},
+        {"source_id":"eliyan_src_002","url":"https://eliyan.com/news/eliyan-achieves-unicorn-status-with-145-million-series-c/","title":"Eliyan Completes Series C","publisher":"Eliyan","published_at":"2026-07-29","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records the completed Series C for the active privately financed AI-interconnect company.","supports":["funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Q.ANT", "aliases": ["QANT"], "country": "DE", "region": "OVERSEAS",
+      "website": "https://qant.com", "website_verified": true, "founded_year": 2018,
+      "main_products": ["Light Empowered Native Arithmetics photonic processor", "photonic AI/HPC computing platform"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["qant_src_001", "qant_src_002"],
+      "sources": [
+        {"source_id":"qant_src_001","url":"https://qant.com/about-us/","title":"About Q.ANT","publisher":"Q.ANT","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page states Q.ANT was founded in 2018 and develops commercial photonic processors for AI and HPC.","supports":["company_identity","founded_year","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"qant_src_002","url":"https://qant.com/press-releases/qant-raises-62-million-euro-to-transform-the-future-of-computing-with-photonic-processing/","title":"Q.ANT Raises Series A","publisher":"Q.ANT","published_at":"2025-07-17","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records a €62M Series A for photonic AI processors; current company news confirms this remains the named stage.","supports":["funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Scintil Photonics", "aliases": ["SCINTIL"], "country": "FR", "region": "OVERSEAS",
+      "website": "https://www.scintil-photonics.com", "website_verified": true, "founded_year": 2018,
+      "main_products": ["LEAF Light DWDM laser source", "SHIP heterogeneous integrated photonics"],
+      "funding_stage": "SERIES_B", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["scintil_src_001", "scintil_src_002"],
+      "sources": [
+        {"source_id":"scintil_src_001","url":"https://www.scintil-photonics.com/about","title":"About SCINTIL Photonics","publisher":"SCINTIL Photonics","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official page describes laser-integrated photonics and LEAF Light products for AI data centers.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"scintil_src_002","url":"https://www.scintil-photonics.com/post/scintil-photonics-raises-58m-to-scale-integrated-photonics-for-ai-factories","title":"SCINTIL Raises $58M Series B","publisher":"SCINTIL Photonics","published_at":"2025-09-09","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records the Series B; company background identifies founding in 2018.","supports":["founded_year","funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "OpenLight", "aliases": ["OpenLight Photonics"], "country": "US", "region": "OVERSEAS",
+      "website": "https://openlightphotonics.com", "website_verified": true, "founded_year": 2022,
+      "main_products": ["heterogeneous silicon-photonics PDK", "400G modulators", "on-chip lasers"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["openlight_src_001", "openlight_src_002"],
+      "sources": [
+        {"source_id":"openlight_src_001","url":"https://openlightphotonics.com/history","title":"OpenLight History","publisher":"OpenLight","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official history states OpenLight was formed in 2022 and remains an operating venture-backed photonics company.","supports":["company_identity","founded_year","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"openlight_src_002","url":"https://openlightphotonics.com/newsroom/openlight-secures-50-million-in-series-a-1-funding-to-accelerate-global-deployment-of-next-generation-photonics","title":"OpenLight Secures Series A-1","publisher":"OpenLight","published_at":"2026-04-28","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records an A-1 extension and describes PASIC PDK, 400G modulators and integrated lasers for AI data centers.","supports":["funding_stage","product","ai_core_business"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Oxmiq Labs", "aliases": ["OXMIQ"], "country": "US", "region": "OVERSEAS",
+      "website": "https://oxmiq.ai", "website_verified": true, "founded_year": 2023,
+      "main_products": ["OxCore licensable GPU architecture", "OxQuilt chiplet architecture", "OXPython software stack"],
+      "funding_stage": "SERIES_A", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["oxmiq_src_001", "oxmiq_src_002"],
+      "sources": [
+        {"source_id":"oxmiq_src_001","url":"https://oxmiq.ai/","title":"OXMIQ For the Age of Inference","publisher":"OXMIQ","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official site describes OxCore, OxQuilt and AI/GPU software products and current private financing.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"oxmiq_src_002","url":"https://oxmiq.ai/blog-oxmiq-raises-35m-series-a","title":"OXMIQ Raises $35M Series A","publisher":"OXMIQ","published_at":"2026-07-01","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official release records Series A; the company was formed in 2023 before emerging from stealth.","supports":["founded_year","funding_stage"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "EnCharge AI", "aliases": [], "country": "US", "region": "OVERSEAS",
+      "website": "https://www.enchargeai.com", "website_verified": true, "founded_year": 2022,
+      "main_products": ["analog in-memory computing AI accelerators", "edge-to-cloud AI chiplets and PCIe cards"],
+      "funding_stage": "SERIES_C", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["encharge_src_001", "encharge_src_002", "encharge_src_003"],
+      "sources": [
+        {"source_id":"encharge_src_001","url":"https://www.enchargeai.com/","title":"EnCharge AI","publisher":"EnCharge AI","published_at":null,"accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official site describes analog in-memory AI compute chips, chiplets and PCIe products for edge-to-cloud deployment.","supports":["company_identity","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"encharge_src_002","url":"https://forgeglobal.com/encharge-ai_stock/","title":"EnCharge AI funding rounds and valuation","publisher":"Forge Global","published_at":"2026-09-14","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Current private-market funding history records EnCharge AI's Series C on September 14, 2026 and its earlier Series B; the profile describes the privately held semiconductor company.","supports":["funding_stage","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"encharge_src_003","url":"https://www.enchargeai.com/news-and-publications/encharge-ai-launches-with-21-7m-series-a-to-enable-edge-ai-at-scale","title":"EnCharge AI launches","publisher":"EnCharge AI","published_at":"2022-12-14","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"The company's official launch announcement establishes its 2022 operating and financing history.","supports":["founded_year"],"url_fetched":true,"is_mock":false}
+      ]
+    },
+    {
+      "name": "Fractile", "aliases": ["Fractile AI"], "country": "GB", "region": "OVERSEAS",
+      "website": "https://www.fractile.ai", "website_verified": true, "founded_year": 2022,
+      "main_products": ["in-memory AI inference processor", "rack-scale inference systems"],
+      "funding_stage": "SERIES_B", "funding_stage_confirmed_at": "2026-09-29",
+      "is_public": false, "exit_status": "NONE_CONFIRMED", "is_ai_core": true,
+      "data_origin": "VERIFIED_WEB_RESEARCH", "source_ids": ["fractile_src_001", "fractile_src_002"],
+      "sources": [
+        {"source_id":"fractile_src_001","url":"https://www.fractile.ai/news/fractile-raises-220m-to-build-the-next-generation-of-inference-hardware","title":"Fractile raises $220M","publisher":"Fractile","published_at":"2026-05-15","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Official announcement states founding in 2022 and describes custom inference chips and systems.","supports":["company_identity","founded_year","product","ai_core_business","public_listing","exit_status"],"url_fetched":true,"is_mock":false},
+        {"source_id":"fractile_src_002","url":"https://www.accel.com/news/fractile-the-future-of-ai-inference","title":"Fractile: the future of AI inference","publisher":"Accel","published_at":"2026-05-15","accessed_at":"2026-09-29T12:00:00+00:00","evidence":"Lead investor identifies the financing as Series B and confirms the 2022 founding and AI-inference chip focus.","supports":["funding_stage","founded_year","product"],"url_fetched":true,"is_mock":false}
+      ]
+    }
+  ]
+}
