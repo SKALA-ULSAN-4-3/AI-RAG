@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "companies": [
+    "Mobilint",
+    "HyperAccel",
+    "Panmnesia",
+    "XCENA",
+    "BOS Semiconductors",
+    "iHW",
+    "MangoBoost",
+    "Articron",
+    "Pebble Square",
+    "Semunite",
+    "d-Matrix",
+    "Axelera AI",
+    "Avicena",
+    "Eliyan",
+    "Q.ANT",
+    "Scintil Photonics",
+    "OpenLight",
+    "Oxmiq Labs",
+    "EnCharge AI",
+    "Fractile"
+  ],
+  "documents": [
+    {
+      "document_id": "tech_01_homepage",
+      "company": "Mobilint",
+      "url": "https://www.mobilint.com",
+      "title": "Mobilint 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_02_homepage",
+      "company": "HyperAccel",
+      "url": "https://hyperaccel.ai",
+      "title": "HyperAccel 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_03_homepage",
+      "company": "Panmnesia",
+      "url": "https://panmnesia.com",
+      "title": "Panmnesia 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_04_homepage",
+      "company": "XCENA",
+      "url": "https://xcena.com",
+      "title": "XCENA 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_05_homepage",
+      "company": "BOS Semiconductors",
+      "url": "https://www.bos-semi.com",
+      "title": "BOS Semiconductors 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_06_homepage",
+      "company": "iHW",
+      "url": "https://ihw-ai.com",
+      "title": "iHW 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_07_homepage",
+      "company": "MangoBoost",
+      "url": "https://www.mangoboost.io",
+      "title": "MangoBoost 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_08_homepage",
+      "company": "Articron",
+      "url": "https://articron.com",
+      "title": "Articron 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_09_homepage",
+      "company": "Pebble Square",
+      "url": "https://www.pebble-square.com",
+      "title": "Pebble Square 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_10_homepage",
+      "company": "Semunite",
+      "url": "https://semunite.com",
+      "title": "Semunite 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_11_homepage",
+      "company": "d-Matrix",
+      "url": "https://www.d-matrix.ai",
+      "title": "d-Matrix 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_12_homepage",
+      "company": "Axelera AI",
+      "url": "https://axelera.ai",
+      "title": "Axelera AI 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_13_homepage",
+      "company": "Avicena",
+      "url": "https://avicena.tech",
+      "title": "Avicena 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_14_homepage",
+      "company": "Eliyan",
+      "url": "https://eliyan.com",
+      "title": "Eliyan 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_15_homepage",
+      "company": "Q.ANT",
+      "url": "https://qant.com",
+      "title": "Q.ANT 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_16_homepage",
+      "company": "Scintil Photonics",
+      "url": "https://www.scintil-photonics.com",
+      "title": "Scintil Photonics 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_17_homepage",
+      "company": "OpenLight",
+      "url": "https://openlightphotonics.com",
+      "title": "OpenLight 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_18_homepage",
+      "company": "Oxmiq Labs",
+      "url": "https://oxmiq.ai",
+      "title": "Oxmiq Labs 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_19_homepage",
+      "company": "EnCharge AI",
+      "url": "https://www.enchargeai.com",
+      "title": "EnCharge AI 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "tech_20_homepage",
+      "company": "Fractile",
+      "url": "https://www.fractile.ai",
+      "title": "Fractile 공식 홈페이지",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "hyperaccel_lpu_paper",
+      "company": "HyperAccel",
+      "url": "https://arxiv.org/pdf/2408.07326",
+      "title": "LPU: A Latency-Optimized and Highly Scalable Processor for Large Language Model Inference",
+      "document_type": "paper",
+      "published_at": "2024-08-14"
+    },
+    {
+      "document_id": "panmnesia_cxl_gpu_paper",
+      "company": "Panmnesia",
+      "url": "https://arxiv.org/pdf/2506.15601",
+      "title": "CXL-GPU: Pushing GPU Memory Boundaries with the Integration of CXL Technologies",
+      "document_type": "paper",
+      "published_at": "2025-06-18"
+    },
+    {
+      "document_id": "articron_yonsei_press",
+      "company": "Articron",
+      "url": "https://www.yonsei.ac.kr/sc/298/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGc2MlMkY1MCUyRjY4MDAyOSUyRmFydGNsVmlldy5kbyUzRg%3D%3D",
+      "title": "고유 설계자동화 기술로 혁신을 이끄는 PIM 반도체 설계 기업, 아티크론",
+      "document_type": "press_release",
+      "published_at": "2025-03-05"
+    },
+    {
+      "document_id": "ihw_technology",
+      "company": "iHW",
+      "url": "https://ihw-ai.com/sub03",
+      "title": "인텔리전트HW 기술 소개",
+      "document_type": "official_website",
+      "published_at": null
+    },
+    {
+      "document_id": "semunite_ai_soc",
+      "company": "Semunite",
+      "url": "https://semunite.com/pages/ai-soc-en.html",
+      "title": "Semunite AI SoC",
+      "document_type": "product",
+      "published_at": null
+    },
+    {
+      "document_id": "ihw_microchip_press",
+      "company": "iHW",
+      "url": "https://ir.microchip.com/news-events/press-releases/detail/51/microchip-teams-up-with-intelligent-hardware-korea-ihwk-to-develop-an-analog-compute-platform-to-accelerate-edge-aiml-inferencing",
+      "title": "Microchip Teams Up with Intelligent Hardware Korea (IHWK) to Develop an Analog Compute Platform",
+      "document_type": "press_release",
+      "published_at": "2023-09-13"
+    },
+    {
+      "document_id": "mobilint_aries_product",
+      "company": "Mobilint",
+      "url": "https://docs.mobilint.com/aries/en/overview.html",
+      "title": "ARIES Product Overview",
+      "document_type": "product",
+      "published_at": null
+    },
+    {
+      "document_id": "mobilint_quantized_patent",
+      "company": "Mobilint",
+      "url": "https://patentimages.storage.googleapis.com/63/0f/41/029436d835fafb/US20250181902A1.pdf",
+      "title": "US20250181902A1: Method and apparatus for evaluating quantized artificial neural network",
+      "document_type": "patent",
+      "published_at": "2025-06-05"
+    }
+  ]
+}

@@ -14,14 +14,17 @@ dependencies = [
 # 실제 웹 검색 모드에서만 필요 (mock 실행/테스트에는 불필요)
 live-search = ["langchain-tavily>=0.2.12"]
 # Hugging Face 공개 임베딩을 로컬에서 실행할 때 설치합니다.
-embeddings = ["sentence-transformers>=5.1.0"]
-production = ["langchain-tavily>=0.2.12", "sentence-transformers>=5.1.0"]
+embeddings = ["sentence-transformers>=5.1.0", "peft>=0.17", "transformers>=4.51"]
+production = ["langchain-tavily>=0.2.12", "sentence-transformers>=5.1.0", "peft>=0.17", "transformers>=4.51"]
+# 기술 RAG: CPU FAISS, PDF 추출, 웹 PDF 저장, OpenAI 구조화 응답.
+tech-rag = ["faiss-cpu>=1.10", "numpy>=1.26", "pypdf>=6.0", "fonttools>=4.0", "playwright>=1.50", "openai>=2.0"]
 
 [dependency-groups]
 dev = ["pytest>=8.3.0"]
 
 [project.scripts]
 investment-scout = "investment_scout.cli:main"
+tech-rag = "investment_scout.rag.cli:main"
 
 [build-system]
 requires = ["hatchling"]
