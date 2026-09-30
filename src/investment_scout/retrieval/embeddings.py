@@ -75,10 +75,12 @@ class SentenceTransformerBackend:
             ) from exc
         # Jina 계열은 모델 저장소의 커스텀 코드를 사용할 수 있다.
         self.model = SentenceTransformer(model_id, trust_remote_code=True)
+        # Jina v5는 task 없이 encode 하면 ValueError: 검색 용도(retrieval)를 명시한다.
+        self._options = {"task": "retrieval"} if model_id == JINA_MODEL_ID else {}
 
     def encode(self, texts: Sequence[str]) -> List[List[float]]:
         vectors = self.model.encode(
-            list(texts), normalize_embeddings=True, convert_to_numpy=True
+            list(texts), normalize_embeddings=True, convert_to_numpy=True, **self._options
         )
         return [vector.tolist() for vector in vectors]
 

@@ -54,3 +54,32 @@ def test_auto_strategy_routes_without_loading_other_model():
         "한국 후보를 검색", texts, strategy="auto", top_k=1
     )
     assert results[0].index == 0
+
+
+def test_jina_backend_passes_retrieval_task(monkeypatch):
+    import sys
+    import types
+
+    from investment_scout.retrieval.embeddings import (
+        JINA_MODEL_ID,
+        KURE_MODEL_ID,
+        SentenceTransformerBackend,
+    )
+
+    calls = []
+
+    class FakeModel:
+        def __init__(self, model_id, **kwargs):
+            pass
+
+        def encode(self, texts, **kwargs):
+            calls.append(kwargs)
+            return [types.SimpleNamespace(tolist=lambda: [1.0, 0.0]) for _ in texts]
+
+    monkeypatch.setitem(sys.modules, "sentence_transformers",
+                        types.SimpleNamespace(SentenceTransformer=FakeModel))
+    SentenceTransformerBackend(JINA_MODEL_ID).encode(["NPU"])
+    SentenceTransformerBackend(KURE_MODEL_ID).encode(["NPU"])
+    # Jina v5는 task 없이 encode 하면 ValueError, KURE는 task 인자를 받지 않음.
+    assert calls[0]["task"] == "retrieval"
+    assert "task" not in calls[1]
