@@ -10,7 +10,7 @@ import pytest
 pytest.importorskip("faiss")
 pytest.importorskip("pypdf")
 
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 from investment_scout.agents.tech_analyst import TechAnalyst
@@ -448,7 +448,10 @@ def test_pipeline_runs_graph_and_reports_each_agent(index):
 
     lines = []
     # 후보 기업 자료가 없는 테스트 인덱스: 검색 결과가 없으므로 OpenAI 호출 없이 '근거 부족'.
-    final = run_pipeline(index, max_candidates=2, min_score=0.3,
+    from investment_scout.agents.investment_judge import InvestmentJudge, Judgement
+
+    judge = InvestmentJudge(parse=lambda **kwargs: Judgement(items=[], risks=[]))
+    final = run_pipeline(index, max_candidates=2, min_score=0.3, judge=judge,
                          echo=lambda line, **kwargs: lines.append(line))
     text = "\n".join(lines)
     assert "🔍 스타트업 탐색: 적격 후보 20개" in text
@@ -456,3 +459,23 @@ def test_pipeline_runs_graph_and_reports_each_agent(index):
     assert text.count("🔬 기술 분류: 근거 부족") == 2
     assert final["evaluated_startups"] == ["Mobilint", "HyperAccel"]
     assert final["termination_reason"] == "LIMIT_REACHED"
+    assert "🧮 투자 판단: HOLD — 총점 0/100" in text
+
+
+def test_collection_keeps_first_pages_and_respects_shared_limit(tmp_path):
+    pdf = tmp_path / "sample.pdf"
+    make_pdf(pdf)
+    manifest = tmp_path / "sources.json"
+    source = {"company": "Company A", "url": "https://example.com/test.pdf", "title": "Test",
+              "document_type": "press_release", "pdf_path": "sample.pdf", "published_at": None}
+    write_json(manifest, {"schema_version": 1, "companies": ["Company A"],
+                          "documents": [{**source, "document_id": "trimmed", "max_pages": 1}]})
+    trimmed = collect_manifest(manifest, tmp_path / "a", local_only=True)
+    assert trimmed["total_pages"] == 1
+    assert len(PdfReader(str(tmp_path / "a" / "trimmed.pdf")).pages) == 1
+    # 다른 자료집이 199페이지를 쓰면 2페이지 문서는 등록되지 않음.
+    write_json(manifest, {"schema_version": 1, "companies": ["Company A"],
+                          "documents": [{**source, "document_id": "full"}]})
+    limited = collect_manifest(manifest, tmp_path / "b", local_only=True, page_limit=1)
+    assert limited["total_pages"] == 0
+    assert limited["records"][0]["error_type"] == "PageLimitError"

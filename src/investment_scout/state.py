@@ -58,6 +58,7 @@ PER_CANDIDATE_FIELDS: Dict[str, Any] = {
     "market_analysis": {},
     "competitor_analysis": {},
     "evaluation_scores": {},
+    "evaluation_details": {},
     "investment_decision": "",
     "hold_reason": None,
 }
@@ -78,6 +79,9 @@ class InvestmentAgentState(TypedDict):
     competitor_analysis: Annotated[Dict[str, Any], "Competitor Analysis"]       # 경쟁사 분석 결과
 
     evaluation_scores: Annotated[Dict[str, float], "Evaluation Scores"]         # 평가 점수 (근거 없는 항목은 생략)
+    # evaluation_details: 설계서 체크리스트 항목별 점수 근거·리스크·판정 규칙. evaluation_scores 는
+    #   Dict[str, float] 라 근거 문장과 출처를 담을 수 없어 별도 필드로 둡니다. (역할 3 → 역할 4 전달)
+    evaluation_details: Annotated[Dict[str, Any], "Evaluation Details"]         # 점수 근거·리스크 (투자 판단)
     investment_decision: Annotated[str, "Investment Decision"]                  # 'RECOMMENDED' or 'HOLD'
     hold_reason: Annotated[Optional[str], "Hold Reason"]                        # 보류 사유 (HOLD 일 때 작성)
 
@@ -143,6 +147,7 @@ def create_initial_state(
         market_analysis={},
         competitor_analysis={},
         evaluation_scores={},
+        evaluation_details={},
         investment_decision="",
         hold_reason=None,
         final_report="",

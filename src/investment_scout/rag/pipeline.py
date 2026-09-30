@@ -1,9 +1,13 @@
-"""통합 실행: 설계서 그래프를 실제 탐색·기술 RAG 노드로 돌리며 노드별 경과 출력.
+"""통합 실행: 설계서 그래프를 실제 에이전트로 돌리며 노드별 경과 출력.
 
-시장성·경쟁사·투자 판단·보고서는 역할 3·4 구현 전까지 기존 근거 기반 노드
-(nodes/production.py)를 자리 표시로 사용: 근거가 없으면 INSUFFICIENT_DATA, 판단은 HOLD.
+탐색·기술 요약·기술 분류(역할 1·2), 시장성·경쟁사·투자 판단(역할 3)은 실제 에이전트.
+보고서(역할 4)는 구현 전까지 기존 근거 기반 노드(nodes/production.py)를 자리 표시로 사용.
+시장 인덱스가 없으면 시장성, Tavily 키가 없으면 경쟁사 노드도 자리 표시로 대체하고 그 사실을 출력.
 """
 
+from investment_scout.agents.competitor import CompetitorAnalyst
+from investment_scout.agents.investment_judge import SCORECARD, InvestmentJudge
+from investment_scout.agents.market_analyst import MarketAnalyst
 from investment_scout.agents.startup_scout import StartupScout, make_scout_node
 from investment_scout.agents.tech_analyst import TechAnalyst
 from investment_scout.agents.tech_classifier import TechClassifier
@@ -13,7 +17,7 @@ from investment_scout.rag.integration import with_technical_sources
 from investment_scout.search import get_search_provider
 from investment_scout.state import create_initial_state
 
-PLACEHOLDER = "(역할 3·4 구현 전 자리 표시 노드)"
+PLACEHOLDER = "(자리 표시 노드)"
 
 
 def _claims(summary: dict, keys: tuple[str, ...], limit: int = 2) -> list[str]:
@@ -46,27 +50,53 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
     if node == "tech_classification":
         return [f"  🔬 기술 분류: {update['tech_category']}",
                 *_claims(update["tech_summary"], ("categories",), limit=1)]
-    if node in ("market_analysis", "competitor_analysis"):
-        label = "📊 시장성 평가" if node == "market_analysis" else "🥊 경쟁사 비교"
-        return [f"  {label}: {update[node]['status']} {PLACEHOLDER}"]
+    if node == "market_analysis":
+        result = update[node]
+        segments = ", ".join(result.get("segments", [])) or PLACEHOLDER
+        return [f"  📊 시장성 평가: {result['status']}, 주장 {len(result['claims'])}개 (세부 시장: {segments})",
+                *_claims(result, ("market_size", "growth_rate"))]
+    if node == "competitor_analysis":
+        result = update[node]
+        rivals = ", ".join(result["data"].get("main_competitors", [])) or "없음"
+        return [f"  🥊 경쟁사 비교: {result['status']}, 경쟁사 [{rivals}]",
+                *_claims(result, ("competitive_comparison", "entry_barriers"), limit=1)]
     if node == "investment_decision":
-        return [f"  🧮 투자 판단: {update['investment_decision']} {PLACEHOLDER}"]
+        details = update.get("evaluation_details") or {}
+        if not details:
+            return [f"  🧮 투자 판단: {update['investment_decision']} {PLACEHOLDER}"]
+        groups = " / ".join(f"{label.split(' ')[0]} {details['groups'][key]}/{weight}"
+                            for key, label, weight, _ in SCORECARD)
+        fatal = sum(r["fatal"] for r in details["risks"])
+        return [f"  🧮 투자 판단: {details['decision']} — 총점 {details['total']}/100 "
+                f"(기준 {details['threshold']}, 치명 리스크 {fatal}건 {details['risk_penalty']}점)",
+                f"      {groups}"]
     if node == "record_evaluation":
-        return [f"  💾 평가 저장: 누적 {len(update.get('evaluated_startups', []))}개"]
+        record = update["evaluation_history"][-1]
+        lines = [f"  💾 평가 저장: 최종 {record['investment_decision']}, 누적 {len(update['evaluated_startups'])}개"]
+        if record["missing_core_information"]:
+            fields = ", ".join(record["missing_core_information"])
+            lines.append(f"      ⚠️ 핵심 정보 부족({fields})으로 HOLD 강제 — record_evaluation 규칙")
+        return lines
     if node == "generate_report":
         return ["", f"📝 보고서 생성: 종료 사유 {state.get('termination_reason')} {PLACEHOLDER}"]
     return [f"  {node}"]
 
 
-def run_pipeline(index, *, max_candidates: int, min_score: float, echo=print) -> dict:
+def run_pipeline(index, *, max_candidates: int, min_score: float, market_index=None,
+                 web_search=None, judge=None, echo=print) -> dict:
     scout = StartupScout(search_provider=get_search_provider("mock"))
     rest = make_production_nodes(retriever=None)
+    if market_index is None:
+        echo(f"⚠️ 시장 인덱스 없음: 시장성 평가는 {PLACEHOLDER}")
+    if web_search is None:
+        echo(f"⚠️ 웹 검색(Tavily) 미설정: 경쟁사 비교는 {PLACEHOLDER}")
     app = build_graph(
         scout_node=with_technical_sources(make_scout_node(scout), index),
         tech_node=TechAnalyst(index, min_score=min_score),
         category_node=TechClassifier(index, min_score=min_score),
-        market_node=rest["market_node"], competitor_node=rest["competitor_node"],
-        decision_node=rest["decision_node"], report_node=rest["report_node"],
+        market_node=MarketAnalyst(market_index, min_score=min_score) if market_index else rest["market_node"],
+        competitor_node=CompetitorAnalyst(web_search) if web_search else rest["competitor_node"],
+        decision_node=judge or InvestmentJudge(), report_node=rest["report_node"],
     )
     state = dict(create_initial_state("Semiconductor", max_candidates=max_candidates))
     config = {"recursion_limit": recommended_recursion_limit(max_candidates)}

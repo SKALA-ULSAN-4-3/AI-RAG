@@ -6,7 +6,7 @@ import hashlib
 import re
 from urllib.parse import urlsplit
 
-from investment_scout.rag.documents import DocumentCorpus
+from investment_scout.rag.documents import MAX_CORPUS_PAGES, DocumentCorpus
 from investment_scout.rag.parsing import parse_pdf
 from investment_scout.rag.storage import load_corpus, read_json, save_corpus, write_json
 
@@ -84,7 +84,19 @@ def capture_source(context, source: dict, destination: Path) -> str:
         page.close()
 
 
-def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool = False) -> dict:
+def trim_pdf(source: Path, destination: Path, max_pages: int) -> None:
+    """앞 N페이지만 보관: 보도자료 뒤쪽의 관련 기사·광고·시세 페이지를 자료와 한도 계산에서 제외."""
+    from pypdf import PdfReader, PdfWriter
+    reader = PdfReader(str(source))
+    writer = PdfWriter()
+    for page in reader.pages[:max_pages]:
+        writer.add_page(page)
+    with open(destination, "wb") as handle:
+        writer.write(handle)
+
+
+def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool = False,
+                     page_limit: int = MAX_CORPUS_PAGES) -> dict:
     manifest = read_json(manifest_path)
     if manifest.get("schema_version") != 1:
         raise ValueError("지원하지 않는 자료 목록 버전입니다.")
@@ -101,6 +113,7 @@ def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool =
     directory.mkdir(parents=True, exist_ok=True)
     corpus_path = directory / "corpus.json"
     corpus = load_corpus(corpus_path) if corpus_path.exists() else DocumentCorpus()
+    corpus.max_pages = page_limit
     records = []
     # 목록 동기화: 목록에서 뺀 자료(예: 본문 없는 PDF)는 자료집과 200페이지 합계에서 제외.
     for document in [d for d in corpus.documents if d.document_id not in set(ids)]:
@@ -120,6 +133,8 @@ def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool =
                     if any(getattr(old, key) != source.get(key) for key in
                            ("company", "url", "title", "document_type", "published_at")):
                         raise ValueError("등록된 문서 메타데이터 변경: 새 document_id를 사용하세요.")
+                    if source.get("max_pages") and len(old.pages) > int(source["max_pages"]):
+                        raise ValueError("max_pages 변경: 새 document_id로 다시 수집하세요.")
                     if not old.pdf_path or not Path(old.pdf_path).is_file():
                         raise ValueError("보존된 PDF가 없습니다. 원문 경로를 복원하세요.")
                     if hashlib.sha256(Path(old.pdf_path).read_bytes()).hexdigest() != old.sha256:
@@ -135,6 +150,10 @@ def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool =
                     else:
                         path = directory / f"{identifier}.pdf"
                         basis = capture_source(context, source, path)
+                    if source.get("max_pages"):
+                        trimmed = directory / f"{identifier}.pdf"
+                        trim_pdf(path, trimmed, int(source["max_pages"]))
+                        path = trimmed
                     metadata = {key: source.get(key) for key in (
                         "document_id", "company", "url", "title", "document_type", "published_at")}
                     document, warnings = parse_pdf(path, metadata={**metadata, "page_basis": basis})

@@ -1,5 +1,6 @@
 """기술 요약 노드: 검색 근거와 인용을 포함한 AnalysisResult 반환."""
 
+from investment_scout.contracts import DEFAULT_REQUIRED_ANALYSIS_DATA
 from investment_scout.rag.generation import OpenAIGenerator, TECH_FIELDS, answer_question
 
 
@@ -23,5 +24,6 @@ class TechAnalyst:
             self.index, self.generator, company=company,
             question=self.question(company),
             fields=TECH_FIELDS, min_score=self.min_score, top_k=12,
+            required=tuple(DEFAULT_REQUIRED_ANALYSIS_DATA["tech_summary"]),
         )
         return {"tech_summary": result}

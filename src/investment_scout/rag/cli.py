@@ -53,8 +53,16 @@ def _run(args) -> int:
         return 0
     if args.command == "collect":
         from investment_scout.rag.collection import collect_manifest
-        result = collect_manifest(args.manifest, args.directory, local_only=args.local_only)
-        print(f"전체 자료: {result['total_pages']}/200페이지")
+        from investment_scout.rag.documents import MAX_CORPUS_PAGES
+        # 합산 한도: 기술·시장 자료집이 200페이지를 나눠 씀. 자기 자료집은 제외하고 합산.
+        own = (args.directory / "corpus.json").resolve()
+        others = {path: load_corpus(path).total_pages for path in args.shared_corpus
+                  if path.exists() and path.resolve() != own}
+        used = sum(others.values())
+        result = collect_manifest(args.manifest, args.directory, local_only=args.local_only,
+                                  page_limit=MAX_CORPUS_PAGES - used)
+        print(f"이 자료집: {result['total_pages']}페이지 + 다른 자료집: {used}페이지 "
+              f"= 합계 {result['total_pages'] + used}/{MAX_CORPUS_PAGES}페이지")
         return int(any(row["status"] in {"ERROR", "NO_TEXT"} for row in result["records"]))
     if args.command == "package":
         from investment_scout.rag.handoff import package_handoff
@@ -74,7 +82,15 @@ def _run(args) -> int:
     index = _load_index(args.index)
     if args.command == "pipeline":
         from investment_scout.rag.pipeline import run_pipeline
-        final = run_pipeline(index, max_candidates=args.max_candidates, min_score=args.min_score)
+        from investment_scout.search import SearchConfigurationError, get_search_provider
+        market = _load_index(args.market_index) if (args.market_index / "metadata.json").exists() else None
+        try:
+            web = get_search_provider("live")
+        except SearchConfigurationError as exc:
+            print(f"경쟁사 웹 검색 비활성: {exc}")
+            web = None
+        final = run_pipeline(index, max_candidates=args.max_candidates, min_score=args.min_score,
+                             market_index=market, web_search=web)
         write_json(args.out, final)
         print("최종 State(보고서 포함)는 아래 경로에 저장됩니다.")
     elif args.command == "evaluate":
@@ -148,14 +164,18 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--manifest", type=Path, default=Path("data/tech_sources.json"))
     collect.add_argument("--directory", type=Path, default=Path("out/tech_rag/documents"))
     collect.add_argument("--local-only", action="store_true")
+    collect.add_argument("--shared-corpus", type=Path, nargs="*", default=[
+        Path("out/tech_rag/documents/corpus.json"), Path("out/market_rag/documents/corpus.json")],
+        help="200페이지 한도를 함께 쓰는 자료집 (자기 자료집은 자동 제외)")
     package = commands.add_parser("package", help="기술 결과·원본 PDF를 역할 3 전달용 ZIP으로 묶기")
     package.add_argument("--analysis", type=Path, default=Path("out/tech_rag/analyze.json"))
     package.add_argument("--directory", type=Path, default=Path("out/tech_rag/documents"))
     package.add_argument("--manifest", type=Path, default=Path("data/tech_sources.json"))
     package.add_argument("--out", type=Path, default=Path("out/tech_rag/tech_handoff.zip"))
-    pipeline = commands.add_parser("pipeline", help="탐색→기술 요약→기술 분류 그래프 실행, 노드별 경과 출력 (OpenAI 호출)")
+    pipeline = commands.add_parser("pipeline", help="설계서 그래프 전체 실행, 노드별 경과 출력 (OpenAI·Tavily 호출)")
     pipeline.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
     pipeline.add_argument("--max-candidates", type=int, default=20)
+    pipeline.add_argument("--market-index", type=Path, default=Path("out/market_rag/index"))
     pipeline.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.30")))
     pipeline.add_argument("--out", type=Path, default=Path("out/tech_rag/pipeline.json"))
     evaluation = commands.add_parser("evaluate", help="정답셋으로 Hit Rate@K·MRR 측정 (OpenAI 호출 없음)")

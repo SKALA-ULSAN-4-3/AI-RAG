@@ -194,6 +194,7 @@ def record_evaluation(state: InvestmentAgentState) -> Dict[str, Any]:
         "market_analysis": copy.deepcopy(confirmed["market_analysis"]),
         "competitor_analysis": copy.deepcopy(confirmed["competitor_analysis"]),
         "evaluation_scores": copy.deepcopy(scores),
+        "evaluation_details": copy.deepcopy(state.get("evaluation_details") or {}),
         "score_gaps": score_gaps["gaps"],
         "investment_decision": final_decision,
         "hold_reason": hold_reason,

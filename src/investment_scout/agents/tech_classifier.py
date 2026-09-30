@@ -1,6 +1,7 @@
 """기술 분류 노드: 기술 요약에서 인용 검증을 통과한 분류만 전달."""
 
-from investment_scout.rag.generation import OpenAIGenerator, answer_question
+from investment_scout.contracts import DEFAULT_REQUIRED_ANALYSIS_DATA
+from investment_scout.rag.generation import OpenAIGenerator, analysis_status, answer_question
 
 
 def tech_classifier(state: dict) -> dict:
@@ -45,8 +46,9 @@ class TechClassifier:
         known = {item["source_id"]: item for item in summary["evidence"]}
         known.update({item["source_id"]: item for item in category["evidence"]})
         summary["evidence"] = list(known.values())
-        summary["missing_information"] = list(dict.fromkeys([
-            *summary["missing_information"], *category["missing_information"],
-        ]))
-        summary["status"] = "INSUFFICIENT_DATA" if summary["missing_information"] else "OK"
+        # 분류 LLM이 해당하지 않는 라벨마다 적는 '근거 부족: NPU' 같은 항목은 누락 정보가 아니므로 제외.
+        category_gaps = [note for note in category["missing_information"]
+                         if "categories" in note or "검색 결과 없음" in note]
+        summary["missing_information"] = list(dict.fromkeys([*summary["missing_information"], *category_gaps]))
+        summary["status"] = analysis_status(summary, DEFAULT_REQUIRED_ANALYSIS_DATA["tech_summary"])
         return {"tech_summary": summary, **tech_classifier({"tech_summary": summary})}

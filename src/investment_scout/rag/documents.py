@@ -71,8 +71,10 @@ class PageLimitError(ValueError):
 class DocumentCorpus:
     """공통 자료집: 기업별이 아닌 모든 기업 합계로 페이지 제한 적용."""
 
-    def __init__(self) -> None:
+    def __init__(self, max_pages: int = MAX_CORPUS_PAGES) -> None:
         self._documents: dict[str, Document] = {}
+        # 공유 한도: 기술·시장 자료집을 합쳐 200페이지가 되도록 남은 페이지만 허용할 수 있음.
+        self.max_pages = max_pages
 
     @property
     def documents(self) -> tuple[Document, ...]:
@@ -87,9 +89,10 @@ class DocumentCorpus:
         if document.document_id in self._documents:
             raise ValueError(f"이미 등록된 문서: {document.document_id}")
         proposed_total = self.total_pages + len(document.pages)
-        if proposed_total > MAX_CORPUS_PAGES:
+        if proposed_total > self.max_pages:
             raise PageLimitError(
-                f"전체 자료 {proposed_total}페이지: {MAX_CORPUS_PAGES}페이지 한도 초과"
+                f"자료 {proposed_total}페이지: {self.max_pages}페이지 한도 초과 "
+                f"(기술·시장 자료집 합산 {MAX_CORPUS_PAGES}페이지)"
             )
         self._documents[document.document_id] = document
 

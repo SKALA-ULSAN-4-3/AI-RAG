@@ -95,7 +95,7 @@ def test_reset_returns_independent_copies():
     assert PER_CANDIDATE_FIELDS["tech_summary"] == {}
     assert set(a) == {
         "tech_summary", "tech_category", "market_analysis", "competitor_analysis",
-        "evaluation_scores", "investment_decision", "hold_reason",
+        "evaluation_scores", "evaluation_details", "investment_decision", "hold_reason",
     }
 
 
