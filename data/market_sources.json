@@ -1,13 +1,14 @@
 {
   "schema_version": 1,
   "description": "시장성 RAG 자료: companies는 기업이 아니라 세부 시장. max_pages는 수치가 있는 앞쪽만 보관(뒤쪽 관련 기사·광고 제외).",
-  "companies": ["AI_CHIP", "CXL_MEMORY", "SILICON_PHOTONICS", "IN_MEMORY_COMPUTE", "CHIPLET"],
+  "companies": ["AI_CHIP", "CXL_MEMORY", "SILICON_PHOTONICS", "IN_MEMORY_COMPUTE", "CHIPLET", "DATACENTER_AI"],
   "documents": [
     {"document_id": "m_edge_ai_bcc", "company": "AI_CHIP", "url": "https://www.globenewswire.com/news-release/2025/10/02/3160652/0/en/Edge-AI-Market-to-Grow-at-36-9-CAGR-Through-2030.html", "title": "Edge AI Market to Grow at 36.9% CAGR Through 2030", "document_type": "press_release", "published_at": "2025-10-02", "max_pages": 4},
     {"document_id": "m_edge_ai_hw_sns", "company": "AI_CHIP", "url": "https://www.snsinsider.com/press-release/global-edge-ai-hardware-market", "title": "Edge AI Hardware Market Size to Exceed $248.08 Billion By 2035", "document_type": "press_release", "published_at": null, "max_pages": 2},
     {"document_id": "m_cxl_appliance", "company": "CXL_MEMORY", "url": "https://natlawreview.com/press-releases/compute-express-link-cxl-memory-appliance-market-anticipated-grow-333-cagr", "title": "Compute Express Link (CXL) Memory-Appliance Market Anticipated to Grow at 33.3% CAGR", "document_type": "press_release", "published_at": null, "max_pages": 3},
     {"document_id": "m_siph_wissen", "company": "SILICON_PHOTONICS", "url": "https://www.prnewswire.com/news-releases/silicon-photonics-market-size-forecast-at-usd-9-6-billion-by-2030--wissen-research-302779291.html", "title": "Silicon Photonics Market Size Forecast at USD 9.6 Billion by 2030", "document_type": "press_release", "published_at": "2026-05-21", "max_pages": 3},
     {"document_id": "m_imc_gmr", "company": "IN_MEMORY_COMPUTE", "url": "https://growthmarketreports.com/report/in-memory-computing-chip-market", "title": "In-Memory Computing Chip Market Research Report 2033", "document_type": "press_release", "published_at": null, "max_pages": 3},
-    {"document_id": "m_d2d_yahoo", "company": "CHIPLET", "url": "https://finance.yahoo.com/news/die-die-ip-market-size-143000415.html", "title": "Die-to-Die IP Market Size to Surpass USD 3.72 Billion by 2033", "document_type": "press_release", "published_at": null, "max_pages": 3}
+    {"document_id": "m_d2d_yahoo", "company": "CHIPLET", "url": "https://finance.yahoo.com/news/die-die-ip-market-size-143000415.html", "title": "Die-to-Die IP Market Size to Surpass USD 3.72 Billion by 2033", "document_type": "press_release", "published_at": null, "max_pages": 3},
+    {"document_id": "m_dc_mnm", "company": "DATACENTER_AI", "url": "https://www.globenewswire.com/news-release/2026/09/21/3365598/0/en/data-center-accelerator-market-to-reach-usd-372-68-billion-by-2030-growing-at-16-9-cagr-says-marketsandmarkets.html", "title": "Data Center Accelerator Market to Reach USD 372.68 Billion by 2030, Growing at 16.9% CAGR", "document_type": "press_release", "published_at": "2026-09-21", "max_pages": 3}
   ]
 }

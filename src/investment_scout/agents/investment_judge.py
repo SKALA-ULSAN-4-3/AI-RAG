@@ -66,7 +66,7 @@ EVIDENCE_HINTS = {
 # 후보 근거 연결: evidence의 topic(분석 항목 또는 출처 supports) → 체크리스트 항목.
 # LLM이 뒤쪽 항목에서 근거를 놓치지 않도록 항목별 후보 ID를 코드로 미리 제시 (채점은 LLM).
 ITEM_TOPICS = {
-    "market_size": {"market_size", "growth_rate"},
+    "market_size": {"market_size", "growth_rate", "serviceable_market"},
     "willingness_to_pay": {"customer_demand", "commercialization"},
     "early_traction": {"commercialization", "funding_stage"},
     "solves_problem": {"customer_demand", "core_technology", "advantages"},

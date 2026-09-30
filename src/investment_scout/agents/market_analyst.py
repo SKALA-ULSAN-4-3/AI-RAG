@@ -10,7 +10,9 @@ from investment_scout.rag.generation import (
 
 # 기술 분류 → 세부 시장 (data/market_sources.json의 companies). 분류가 없으면 전체 시장에서 검색.
 SEGMENTS_BY_CATEGORY = {
-    "NPU": ["AI_CHIP"], "AI_ACCELERATOR": ["AI_CHIP"], "GPU": ["AI_CHIP"],
+    # 가속기·GPU·NPU는 엣지(AI_CHIP)와 데이터센터(DATACENTER_AI) 모두 검색, 제품 용도로 LLM이 선택.
+    "NPU": ["AI_CHIP", "DATACENTER_AI"], "AI_ACCELERATOR": ["DATACENTER_AI", "AI_CHIP"],
+    "GPU": ["DATACENTER_AI", "AI_CHIP"],
     # HBM·DRAM은 제외: HBM을 쓰는 가속기를 HBM으로 오분류하는 경우가 있어 메모리 시장으로 보내지 않음.
     "CXL": ["CXL_MEMORY"],
     "PHOTONICS": ["SILICON_PHOTONICS"],
@@ -21,15 +23,15 @@ QUESTION = ("세부 시장의 시장 규모, 성장률(CAGR), 고객 수요와 �
             "(market size, revenue forecast, CAGR growth rate, demand drivers, end users, customers)")
 
 
-GENERAL_SEGMENT = "AI_CHIP"
+GENERAL_SEGMENTS = {"AI_CHIP", "DATACENTER_AI"}
 
 
 def segments_for(category: str, available: set[str]) -> list[str]:
-    """세부 시장 순서: 기업에 가까운 특화 시장 먼저, 범용 AI 칩 시장은 뒤."""
+    """세부 시장 순서: 기업에 가까운 특화 시장 먼저, 범용 AI 칩(엣지·데이터센터) 시장은 뒤."""
     labels = [label.strip() for label in (category or "").split("/")]
     segments = [s for label in labels for s in SEGMENTS_BY_CATEGORY.get(label, [])]
     segments = [s for s in dict.fromkeys(segments) if s in available]
-    segments.sort(key=lambda segment: segment == GENERAL_SEGMENT)
+    segments.sort(key=lambda segment: segment in GENERAL_SEGMENTS)
     return segments or sorted(available)
 
 
@@ -63,8 +65,10 @@ class MarketAnalyst:
             result["evidence"] = []
         else:
             # API·설정 오류는 예외로 전달: 자료 부족으로 위장하지 않음.
+            products = ", ".join(state["current_startup"].get("main_products") or []) or "미상"
             response = self.generator.generate(
-                company=company, question=f"{QUESTION} 세부 시장: {', '.join(segments)}",
+                company=company,
+                question=f"{QUESTION} 세부 시장: {', '.join(segments)}. 기업 주요 제품: {products}",
                 hits=hits, fields=MARKET_FIELDS,
             )
             result = grounded_result(

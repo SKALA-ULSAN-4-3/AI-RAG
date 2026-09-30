@@ -142,10 +142,10 @@ class Quoting:
 
 
 def test_segments_follow_tech_category():
-    available = {"AI_CHIP", "CXL_MEMORY", "SILICON_PHOTONICS", "IN_MEMORY_COMPUTE", "CHIPLET"}
-    assert segments_for("NPU / AI_ACCELERATOR", available) == ["AI_CHIP"]
+    available = {"AI_CHIP", "DATACENTER_AI", "CXL_MEMORY", "SILICON_PHOTONICS", "IN_MEMORY_COMPUTE", "CHIPLET"}
+    assert segments_for("NPU / AI_ACCELERATOR", available) == ["AI_CHIP", "DATACENTER_AI"]
     assert segments_for("IN_MEMORY_COMPUTE", available) == ["IN_MEMORY_COMPUTE", "AI_CHIP"]
-    assert segments_for("GPU / CXL", available) == ["CXL_MEMORY", "AI_CHIP"]
+    assert segments_for("GPU / CXL", available) == ["CXL_MEMORY", "DATACENTER_AI", "AI_CHIP"]
     assert segments_for("근거 부족", available) == sorted(available)
 
 
@@ -155,13 +155,13 @@ def test_market_analyst_cites_segment_reports_and_registers_sources():
     state = {"current_startup": {"name": "A"}, "tech_category": "NPU", "source_evidence": {"A": []}}
     update = MarketAnalyst(index, generator=Quoting())(state)
     result = update["market_analysis"]
-    assert result["status"] == "OK" and result["segments"] == ["AI_CHIP"]
+    assert result["status"] == "OK" and result["segments"] == ["AI_CHIP"]  # 테스트 인덱스에 DATACENTER_AI 없음
     assert {c["source_ids"][0] for c in result["claims"]} == {"m1"}
     for source in update["source_evidence"]["A"]:
         validate_source(source)
     cleaned, dropped = drop_unsupported_claims(result, source_evidence=update["source_evidence"],
                                                field_name="market_analysis", startup="A")
-    assert dropped == [] and len(cleaned["claims"]) == 3
+    assert dropped == [] and len(cleaned["claims"]) == 4  # market_size·growth_rate·customer_demand·SAM
 
 
 class FakeSearch:
