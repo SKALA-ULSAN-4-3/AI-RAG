@@ -29,7 +29,9 @@ def doctor() -> int:
         print(f"{package}: {'OK' if ready else 'NOT_INSTALLED'}")
         if not ready:
             missing.append(package)
-    for name in ("OPENAI_API_KEY", "OPENAI_MODEL"):
+    from investment_scout.rag.generation import OPENAI_MODEL_ID
+    print(f"OpenAI 모델: {OPENAI_MODEL_ID} (고정)")
+    for name in ("OPENAI_API_KEY",):
         configured = bool(os.getenv(name, "").strip())
         print(f"{name}: {'SET' if configured else 'NOT_SET'}")
         if not configured:

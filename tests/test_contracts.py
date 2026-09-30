@@ -171,7 +171,8 @@ def test_missing_core_information_detects_gaps():
     state = {
         "tech_summary": {
             "status": "OK",
-            "data": {"core_technology": "NPU", "differentiation": None},
+            # 팀 결정: 기술 필수 정보는 core_technology 만 (differentiation 누락은 통과)
+            "data": {"core_technology": None, "differentiation": "490개 모델 지원"},
             "claims": [], "missing_information": [], "errors": [],
         },
         "market_analysis": empty_analysis_result(missing_information=["시장 규모 미확보"]),

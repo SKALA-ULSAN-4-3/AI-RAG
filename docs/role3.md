@@ -9,7 +9,7 @@ uv run python -m investment_scout.rag.cli index --corpus out/market_rag/document
 uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 ~~~
 
-`.env`에 `OPENAI_API_KEY`, `OPENAI_MODEL`, `TAVILY_API_KEY`가 필요합니다. `OPENAI_JUDGE_MODEL`을 지정하면 투자 판단 채점에만 그 모델을 씁니다(비우면 `OPENAI_MODEL`). 시장 인덱스가 없거나 Tavily 키가 없으면 `pipeline`이 해당 노드를 자리 표시 노드로 바꾸고 그 사실을 출력합니다.
+`.env`에 `OPENAI_API_KEY`, `TAVILY_API_KEY`가 필요합니다. 모델은 생성·채점 모두 `gpt-4o-mini`로 코드에 고정되어 있습니다. 시장 인덱스가 없거나 Tavily 키가 없으면 `pipeline`이 해당 노드를 자리 표시 노드로 바꾸고 그 사실을 출력합니다.
 
 ## 에이전트
 
@@ -47,7 +47,7 @@ uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 - **필수 정보 규칙(코드)**: 인용 근거에 팀 경력 정보가 없으면 팀 0점, 밸류에이션 정보가 없으면 투자 조건 최대 2점, 고객·공급·매출 정보가 없으면 초기 고객 반응 최대 2점. 설립 연도로 팀 신뢰를, 투자 단계로 밸류에이션 적정성을 추정하지 않기 위한 규칙입니다.
 - **재현성**: 같은 입력도 LLM 채점이 흔들려(측정 시 최대 12점) 3회 채점 후 항목별 중앙값을 씁니다. 반복 실행에서 판정이 같게 유지되는 것을 확인했습니다.
 
-판정: `총점 = 분야 합계(최대 100) − 10 × 치명 리스크가 있는 유형 수`(같은 유형 여러 건은 한 번만 감점). 기업별로 총점 70점 이상이면 **기준 통과**(`RECOMMENDED`), 미만이면 `HOLD`입니다. 기준을 통과해도 **멈추지 않고 모든 후보를 평가**한 뒤, 기준 통과 기업 중 총점 1순위를 `recommended_startup`으로 최종 추천합니다(동점이면 먼저 평가한 기업). 기준 통과 기업이 없으면 전원 보류입니다(팀 결정). 순위 전체는 `final_ranking`에 저장됩니다. 기준을 통과해도 `record_evaluation`이 평가 필수 정보(기술 `core_technology`·`differentiation`, 시장 `market_size`·`growth_rate`, 경쟁 `main_competitors`) 부족을 발견하면 보류로 바꿉니다.
+판정: `총점 = 분야 합계(최대 100) − 10 × 치명 리스크가 있는 유형 수`(같은 유형 여러 건은 한 번만 감점). 기업별로 총점 70점 이상이면 **기준 통과**(`RECOMMENDED`), 미만이면 `HOLD`입니다. 기준을 통과해도 **멈추지 않고 모든 후보를 평가**한 뒤, 기준 통과 기업 중 총점 1순위를 `recommended_startup`으로 최종 추천합니다(동점이면 먼저 평가한 기업). 기준 통과 기업이 없으면 전원 보류입니다(팀 결정). 순위 전체는 `final_ranking`에 저장됩니다. 기준을 통과해도 `record_evaluation`이 평가 필수 정보(기술 `core_technology`, 시장 `market_size`·`growth_rate`, 경쟁 `main_competitors`) 부족을 발견하면 보류로 바꿉니다.
 
 ## 역할 4 전달 항목
 

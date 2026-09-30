@@ -253,9 +253,7 @@ class InvestmentJudge:
         payload = {"company": state["current_startup"]["name"], "tech_category": state.get("tech_category"),
                    "checklist": checklist, "risk_types": list(RISK_TYPES), "evidence": bundle}
         # 재현성: 같은 입력도 LLM 채점이 흔들리므로 여러 번 채점해 항목별 중앙값 사용.
-        # LLM/Judge 모델: OPENAI_JUDGE_MODEL (없으면 OPENAI_MODEL).
-        runs = [score_judgement(self.parse(instructions=INSTRUCTIONS, schema=Judgement, payload=payload,
-                                           model_env="OPENAI_JUDGE_MODEL"),
+        runs = [score_judgement(self.parse(instructions=INSTRUCTIONS, schema=Judgement, payload=payload),
                                 bundle, threshold=self.threshold) for _ in range(self.samples)]
         details = median_details(runs, threshold=self.threshold)
         scores = {**{f"{g}": float(v) for g, v in details["groups"].items()},

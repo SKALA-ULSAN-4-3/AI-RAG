@@ -328,8 +328,10 @@ def test_analyst_keeps_node_contract_and_missing_fields(index):
     state = {"current_startup": {"name": "Company A"}, "market_analysis": {"untouched": True}}
     result = TechAnalyst(Retrieved(), generator=Generated())(state)
     assert set(result) == {"tech_summary"}
-    assert result["tech_summary"]["status"] == "INSUFFICIENT_DATA"
+    # 필수 정보(core_technology)가 있으면 OK, 선택 항목 누락은 missing_information 에만 기록
+    assert result["tech_summary"]["status"] == "OK"
     assert "limitations" not in result["tech_summary"]["data"]
+    assert "근거 부족: limitations" in result["tech_summary"]["missing_information"]
     assert state["market_analysis"] == {"untouched": True}
 
 

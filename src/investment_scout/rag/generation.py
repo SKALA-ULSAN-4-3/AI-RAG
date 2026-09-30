@@ -89,12 +89,16 @@ COMPETITOR_INSTRUCTIONS = (
 )
 
 
-def openai_parse(*, instructions: str, payload: dict, schema, model_env: str = "OPENAI_MODEL"):
+# 팀 결정: 생성·채점(LLM/Judge) 모두 gpt-4o-mini 고정 (환경변수로 바꾸지 않음).
+OPENAI_MODEL_ID = "gpt-4o-mini"
+
+
+def openai_parse(*, instructions: str, payload: dict, schema):
     """구조화 응답 호출: temperature 0, API·설정 오류는 예외로 전달."""
     from openai import OpenAI
-    model = (os.getenv(model_env) or os.getenv("OPENAI_MODEL", "")).strip()
-    if not os.getenv("OPENAI_API_KEY", "").strip() or not model:
-        raise ValueError(".env에 OPENAI_API_KEY와 OPENAI_MODEL을 입력하세요.")
+    model = OPENAI_MODEL_ID
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise ValueError(".env에 OPENAI_API_KEY를 입력하세요.")
     with OpenAI(timeout=90.0, max_retries=2) as client:
         response = client.responses.parse(
             model=model, instructions=instructions,

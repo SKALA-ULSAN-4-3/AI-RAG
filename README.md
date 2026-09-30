@@ -27,8 +27,8 @@
 ## Tech Stack
 
 - Framework: LangGraph
-- LLM/Generator: OpenAI `gpt-4o-mini` (기술 요약·분류)
-- LLM/Judge: OpenAI `gpt-4o-mini` (투자 판단 채점, 3회 채점 중앙값, `OPENAI_JUDGE_MODEL`로 변경 가능)
+- LLM/Generator: OpenAI `gpt-4o-mini` (기술 요약·분류·시장성·경쟁사, 코드에 고정)
+- LLM/Judge: OpenAI `gpt-4o-mini` (투자 판단 채점, 3회 채점 중앙값)
 - Retrieval: FAISS (IndexFlatIP) - Hit Rate@3 0.978, MRR@10 0.923 (46문항, 하이브리드)
 - Embedding: `nlpai-lab/KURE-v1`, `jinaai/jina-embeddings-v5-text-small`
 - PDF/Web: pypdf, Playwright

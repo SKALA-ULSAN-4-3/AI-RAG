@@ -54,25 +54,25 @@ Linux 브라우저 의존성이 부족하면 playwright install --with-deps chro
 
 ## 1. 환경 설정
 
-.env는 만들어져 있으며 Git에서 제외됩니다. 실제 키는 .env에만 입력합니다.
+.env.example을 복사해 .env를 만들고 실제 키는 .env에만 입력합니다(.env는 Git에서 제외).
 .env.example은 빈 설정 양식으로 유지합니다.
 
 ~~~dotenv
 OPENAI_API_KEY=본인_API_키
-OPENAI_MODEL=gpt-4o-mini
+TAVILY_API_KEY=본인_Tavily_키
 EMBEDDING_DEVICE=cpu
 EMBEDDING_BATCH_SIZE=4
 RAG_MIN_SCORE=0.30
 ~~~
 
-요청한 모델 ID는 gpt-4o-mini이며 Responses API의 구조화 응답을 지원합니다.
-OPENAI_API_KEY의 자리표시자는 실제 값으로 바꿔야 합니다. OpenAI는 기술 요약·분류에만 사용합니다.
+모델은 `gpt-4o-mini`로 코드에 고정되어 있으며 Responses API의 구조화 응답을 사용합니다.
+OPENAI_API_KEY의 자리표시자는 실제 값으로 바꿔야 합니다. TAVILY_API_KEY는 경쟁사 비교(역할 3)에만 필요합니다.
 
 ~~~bash
 python -m investment_scout.rag.cli doctor
 ~~~
 
-NOT_SET은 설정 누락, NOT_INSTALLED는 패키지 미설치입니다. 키 값은 출력하지 않습니다.
+NOT_SET은 키 누락, NOT_INSTALLED는 패키지 미설치입니다. 키 값은 출력하지 않습니다.
 수집·인덱싱·검색에는 OpenAI 키가 필요하지 않습니다. 실제 호출 권한은 API 실행 시 확인됩니다.
 
 ## 2. 자료 수집

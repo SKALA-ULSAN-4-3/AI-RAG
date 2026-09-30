@@ -281,7 +281,8 @@ def validate_node_update(
 # 각 분석 필드의 data 안에 아래 키가 존재하고 값이 None 이 아니어야
 # 해당 분석을 "평가 가능"으로 봅니다.
 DEFAULT_REQUIRED_ANALYSIS_DATA: Dict[str, List[str]] = {
-    "tech_summary": ["core_technology", "differentiation"],
+    # 팀 결정: 차별성은 점수표(경쟁 우위·제품/기술력)에서 평가하므로 필수 정보는 핵심 기술만.
+    "tech_summary": ["core_technology"],
     "market_analysis": ["market_size", "growth_rate"],
     "competitor_analysis": ["main_competitors"],
 }
