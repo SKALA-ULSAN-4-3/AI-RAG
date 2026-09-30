@@ -105,6 +105,6 @@ uv run pytest -q
 
 - 신한수 : (예비군 훈련으로 인한 불참)
 - 안영준 : 보고서 생성 Agent 개발, LangGraph 통합, PDF 시각화, Score & Citation 검증, 통합 테스트
-- 정하윤 : (역할 기입)
+- 정하윤 : 스타트업 탐색 Agent, 후보 순환·조건 분기 그래프, 후보 스타트업 선정·적격성 검증(국내 10 / 해외 10)
 - 손수경 : PDF & Web Parsing, 문서 Chunking, KURE/Jina모델 활용 Embedding, FAISS Retrieval, Technical Summary & Classification Agents개발
 - 손경락 : (역할 기입)
