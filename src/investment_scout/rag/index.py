@@ -76,7 +76,7 @@ class DualFaissIndex:
         return cls(chunks, indexes, embedder)
 
     def search(self, query: str, *, company: str, top_k: int = 5,
-               min_score: float = 0.30) -> list[SearchHit]:
+               min_score: float = 0.30, weights: dict[str, float] | None = None) -> list[SearchHit]:
         if not -1 <= min_score <= 1:
             raise ValueError("min_score는 -1~1 범위여야 합니다.")
         if not query.strip() or top_k <= 0:
@@ -95,8 +95,9 @@ class DualFaissIndex:
             for score, position in zip(distances[0], positions[0]):
                 if int(position) in eligible:
                     scores[int(position)][model] = float(score)
-        preferred = choose_embedding_model(query)
-        weights = {model: 0.7 if model == preferred else 0.3 for model in MODEL_IDS}
+        if weights is None:
+            preferred = choose_embedding_model(query)
+            weights = {model: 0.7 if model == preferred else 0.3 for model in MODEL_IDS}
         hits = []
         for position, model_scores in scores.items():
             score = sum(weights[m] * model_scores[m] for m in MODEL_IDS)

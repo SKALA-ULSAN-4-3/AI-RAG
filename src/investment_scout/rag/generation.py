@@ -74,7 +74,7 @@ class OpenAIGenerator:
         return response.output_parsed
 
 
-def _loose(text: str) -> str:
+def loose_text(text: str) -> str:
     # PDF 추출 흔적 무시: 합자(ﬁ)·공백("t o")·하이픈("end-\nuser"→"enduser")만 제거, 나머지 글자와 순서는 그대로 대조.
     text = unicodedata.normalize("NFKC", text)
     return re.sub(r"[\s\-\u00ad\u2010\u2011]+", "", text)
@@ -82,11 +82,11 @@ def _loose(text: str) -> str:
 
 def _quote_found(quote: str, text: str) -> bool:
     """원문 인용 확인: '...'는 생략 표시로 보고 각 구간이 원문에 순서대로 있어야 통과."""
-    segments = [_loose(part.strip().rstrip(".,;:")) for part in re.split(r"\.{3}|…", quote)]
+    segments = [loose_text(part.strip().rstrip(".,;:")) for part in re.split(r"\.{3}|…", quote)]
     segments = [part for part in segments if part]
     if not segments or any(len(part) < 8 for part in segments):
         return False
-    source, position = _loose(text), 0
+    source, position = loose_text(text), 0
     for part in segments:
         position = source.find(part, position)
         if position < 0:

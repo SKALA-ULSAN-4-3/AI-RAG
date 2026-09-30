@@ -380,3 +380,46 @@ def test_quote_matching_tolerates_pdf_artifacts_only(index, quote, ok):
     result = grounded_result(response(chunk, quote=quote), [SearchHit(chunk, 0.9, {})],
                              company="Company A", fields=("answer",))
     assert (result["status"] == "OK") is ok
+
+
+def test_graph_nodes_reuse_query_vectors_across_companies(index):
+    # 기업명이 없는 고정 질문: 첫 기업 이후 모델 재로딩·질문 재임베딩 없음 (그래프 경로 속도).
+    calls = []
+    original = index.embedder.encode
+
+    def counted(texts, *, model, query=False):
+        if query:
+            calls.append(model)
+            return [[1.0] + [0.0] * (4 if model == "kure" else 6) for _ in texts]
+        return original(texts, model=model, query=query)
+
+    index.embedder.encode = counted
+
+    class NoFacts:
+        def generate(self, **kwargs):
+            return GroundedResponse(facts=[], missing_information=[])
+
+    analyst = TechAnalyst(index, generator=NoFacts())
+    for company in ("Company A", "Company B"):
+        analyst({"current_startup": {"name": company}})
+    assert calls == ["kure", "jina"]
+
+
+def test_retrieval_evaluation_scores_rank_of_answer_page(index):
+    from investment_scout.rag.evaluation import evaluate
+
+    items = [
+        {"company": "Company A", "question": QUESTIONS[0], "answer_contains": ["INT8 inference"]},
+        {"company": "Company B", "question": QUESTIONS[1], "answer_contains": ["10 TOPS/W"]},
+    ]
+    report = evaluate(index, items, ks=(1, 3), modes={"hybrid": None})
+    assert report["metrics"]["hybrid"] == {"hit@1": 1.0, "hit@3": 1.0, "mrr@3": 1.0}
+    assert report["items"][0]["relevant_pages"] == ["A:p1"]
+
+
+def test_retrieval_evaluation_rejects_phrase_missing_from_corpus(index):
+    from investment_scout.rag.evaluation import evaluate
+
+    with pytest.raises(ValueError, match="정답 구절"):
+        evaluate(index, [{"company": "Company A", "question": QUESTIONS[0],
+                          "answer_contains": ["not in any document"]}])

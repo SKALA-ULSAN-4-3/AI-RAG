@@ -72,7 +72,16 @@ def _run(args) -> int:
         print(f"{len(index.chunks)}개 청크, KURE/Jina 인덱스 저장: {args.index}")
         return 0
     index = _load_index(args.index)
-    if args.command == "search":
+    if args.command == "evaluate":
+        from investment_scout.rag.evaluation import evaluate
+        report = evaluate(index, read_json(args.eval)["items"], ks=tuple(args.k))
+        write_json(args.out, report)
+        depth = max(args.k)
+        print(f"질문 {report['questions']}개 (정답: 구절이 있는 페이지, 임계값 없이 순위 평가)")
+        for mode, metrics in report["metrics"].items():
+            hits = "  ".join(f"Hit@{k} {metrics[f'hit@{k}']:.3f}" for k in args.k)
+            print(f"{mode:>6}: {hits}  MRR@{depth} {metrics[f'mrr@{depth}']:.3f}")
+    elif args.command == "search":
         hits = index.search(args.question, company=args.company, min_score=args.min_score)
         write_json(args.out, {"company": args.company, "question": args.question,
                              "status": "OK" if hits else "INSUFFICIENT_DATA",
@@ -139,6 +148,11 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--directory", type=Path, default=Path("out/tech_rag/documents"))
     package.add_argument("--manifest", type=Path, default=Path("data/tech_sources.json"))
     package.add_argument("--out", type=Path, default=Path("out/tech_rag/tech_handoff.zip"))
+    evaluation = commands.add_parser("evaluate", help="정답셋으로 Hit Rate@K·MRR 측정 (OpenAI 호출 없음)")
+    evaluation.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
+    evaluation.add_argument("--eval", type=Path, default=Path("data/retrieval_eval.json"))
+    evaluation.add_argument("--k", type=int, nargs="+", default=[1, 3, 5, 10])
+    evaluation.add_argument("--out", type=Path, default=Path("out/tech_rag/evaluate.json"))
     for name in ("index", "search", "ask", "analyze", "verify"):
         command = commands.add_parser(name)
         command.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
