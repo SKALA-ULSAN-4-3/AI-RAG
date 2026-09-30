@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict
 from investment_scout.contracts import validate_node_update
 from investment_scout.rag.generation import openai_parse
 from investment_scout.state import DECISION_HOLD, DECISION_RECOMMENDED
+from investment_scout.agents.market_rules import DEMAND, TRACTION, market_fact_supported
 
 # 설계서 "투자판단 기준" 그대로: (키, 항목, 비중, [(키, 체크리스트 질문, 배점)])
 SCORECARD = [
@@ -64,9 +65,9 @@ EVIDENCE_HINTS = {
 # 후보 근거 연결: evidence의 topic(분석 항목 또는 출처 supports) → 체크리스트 항목.
 # LLM이 뒤쪽 항목에서 근거를 놓치지 않도록 항목별 후보 ID를 코드로 미리 제시 (채점은 LLM).
 ITEM_TOPICS = {
-    "market_size": {"market_size", "growth_rate"},
+    "market_size": {"market_size", "tam", "sam"},
     "willingness_to_pay": {"customer_demand", "commercialization"},
-    "early_traction": {"commercialization", "funding_stage"},
+    "early_traction": {"commercialization", "customer_traction"},
     "solves_problem": {"customer_demand", "core_technology", "advantages"},
     "core_technology": {"core_technology", "advantages", "differentiation", "categories"},
     "revenue_model": {"commercialization", "product"},
@@ -143,7 +144,8 @@ def evidence_bundle(state: dict) -> list[dict]:
         for claim in (state.get(field) or {}).get("claims", []):
             citation = (claim.get("citations") or [{}])[0]
             bundle.append({"id": f"{field}:{claim['claim_id']}", "field": field,
-                           "topic": (claim.get("data_keys") or [""])[0], "text": claim["text"],
+                           "topic": ", ".join(claim.get("data_keys") or []), "text": claim["text"],
+                           "quoted_text": " ".join(c.get("quote", "") for c in claim.get("citations", [])),
                            "source": citation.get("url"), "source_ids": claim.get("source_ids", [])})
     profile = state.get("current_startup") or {}
     # 후보 탐색 출처(설립·투자 단계·Exit 확인 자료)는 source_evidence에 있고 프로필에는 ID만 있음.
@@ -159,17 +161,33 @@ def evidence_bundle(state: dict) -> list[dict]:
     return bundle
 
 
+def suitable_market_evidence(key: str, evidence: dict) -> bool:
+    """시장성 항목은 ID 존재뿐 아니라 근거의 주제와 필수 내용을 검사한다."""
+    topics = {t.strip() for t in evidence.get("topic", "").split(",")}
+    text = evidence.get("quoted_text") or evidence.get("text", "")
+    if not topics & ITEM_TOPICS[key]:
+        return False
+    if key == "market_size":
+        return evidence.get("field") == "market_analysis" and market_fact_supported("market_size", text)
+    if key == "willingness_to_pay":
+        return bool(DEMAND.search(text))
+    return bool(TRACTION.search(text))
+
+
 def score_judgement(judgement: Judgement, bundle: list[dict], *,
                     threshold: int = RECOMMEND_THRESHOLD) -> dict:
     """코드 채점: 배점 상한·근거 검증·합산·리스크 감점·판정 (LLM 수치를 그대로 믿지 않음)."""
     known = {item["id"] for item in bundle}
     texts = {item["id"]: item.get("text", "") for item in bundle}
+    by_id = {item["id"]: item for item in bundle}
     proposed = {item.key: item for item in judgement.items}
     items = []
     for group, label, weight, checklist in SCORECARD:
         for key, question, points in checklist:
             item = proposed.get(key)
             evidence = [e for e in (item.evidence_ids if item else []) if e in known]
+            if group == "market":
+                evidence = [e for e in evidence if suitable_market_evidence(key, by_id[e])]
             if item and evidence:
                 score = max(0, min(points, item.score))
                 rationale = item.rationale

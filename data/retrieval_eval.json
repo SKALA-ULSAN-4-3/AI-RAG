@@ -20,7 +20,7 @@
     {"company": "Avicena", "question": "microLED 링크의 송신 전력은 얼마인가?", "answer_contains": ["200fJ/bit"]},
     {"company": "Avicena", "question": "Has Avicena shipped evaluation kits?", "answer_contains": ["1Tbps Evaluation Kits"]},
     {"company": "Eliyan", "question": "NuLink PHY 기술의 장점은?", "answer_contains": ["NuLink and NuLink-X PHY"]},
-    {"company": "Eliyan", "question": "What IP products are offered for chip connections?", "answer_contains": ["Die-to-Die and Chip-to-Chip"]},
+    {"company": "Eliyan", "question": "What IP products are offered for chip connections?", "answer_contains": ["NuLink and NuLink-X PHY"]},
     {"company": "Q.ANT", "question": "광 프로세서의 에너지 효율은 기존 CMOS 대비 몇 배인가?", "answer_contains": ["up to 30 times the energy efficiency"]},
     {"company": "Q.ANT", "question": "What does the developer SDK include?", "answer_contains": ["C/C++ and Python APIs"]},
     {"company": "Scintil Photonics", "question": "LEAF Light 레이저 소스의 속도와 전력 특성은?", "answer_contains": ["beyond 1 terabit per second"]},

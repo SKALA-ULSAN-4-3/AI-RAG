@@ -37,6 +37,20 @@ TECH_TEXTS = [
 QUESTIONS = [f"technical question {i}" for i in range(5)]
 
 
+def test_tech_manifest_registers_searchable_mobilint_patent():
+    manifest = read_json(Path("data/tech_sources.json"))
+    patent = next(
+        item for item in manifest["documents"]
+        if item["document_id"] == "mobilint_quantization_patent"
+    )
+
+    assert patent["company"] == "Mobilint"
+    assert patent["document_type"] == "patent"
+    assert patent["url"].endswith("/US20250181902A1/en")
+    assert patent["published_at"] == "2025-06-05"
+    assert patent["max_pages"] == 3
+
+
 class FixedEmbeddings:
     """가상 벡터: 의미 품질이 아닌 기업 필터·점수·인용 연결만 검증."""
 
@@ -454,6 +468,7 @@ def test_pipeline_runs_graph_and_reports_each_agent(index):
 
     judge = InvestmentJudge(parse=lambda **kwargs: Judgement(items=[], risks=[]))
     final = run_pipeline(index, max_candidates=2, min_score=0.3, judge=judge,
+                         allow_missing_market=True,
                          echo=lambda line, **kwargs: lines.append(line))
     text = "\n".join(lines)
     assert "🔍 스타트업 탐색: 적격 후보 20개" in text

@@ -14,11 +14,11 @@ from investment_scout.contracts import empty_analysis_result, make_claim
 Category = Literal["NPU", "AI_ACCELERATOR", "HBM", "DRAM", "GPU", "EDA_PROCESS_AI",
                    "IN_MEMORY_COMPUTE", "CXL", "PHOTONICS", "OTHER"]
 TECH_FIELDS = ("core_technology", "differentiation", "advantages", "limitations", "commercialization")
-MARKET_FIELDS = ("market_size", "growth_rate", "customer_demand")
+MARKET_FIELDS = ("market_size", "growth_rate", "customer_demand", "tam", "sam")
 COMPETITOR_FIELDS = ("main_competitors", "competitive_comparison", "entry_barriers")
 # 문자열로 합쳐 전달하는 항목 (1번 계약: core_technology·differentiation은 문자열), 나머지는 목록.
 TEXT_FIELDS = {"core_technology", "differentiation", "answer", "market_size", "growth_rate",
-               "competitive_comparison"}
+               "competitive_comparison", "tam", "sam"}
 
 
 class Citation(BaseModel):
@@ -31,7 +31,7 @@ class Fact(BaseModel):
     model_config = ConfigDict(extra="forbid")
     field: Literal["core_technology", "differentiation", "advantages", "limitations", "commercialization",
                    "categories", "answer", "market_size", "growth_rate", "customer_demand",
-                   "main_competitors", "competitive_comparison", "entry_barriers"]
+                   "main_competitors", "competitive_comparison", "entry_barriers", "tam", "sam"]
     text: str
     category: Category | None
     citations: list[Citation]
@@ -74,6 +74,8 @@ MARKET_INSTRUCTIONS = (
     "시장 이름은 원문 그대로 적는다(예: Edge AI Market을 'AI 시장'으로 줄이지 않는다). "
     "segments는 기업에 가까운 순서이므로 앞선 세부 시장의 수치를 우선한다. "
     "customer_demand에는 수요 요인·주요 수요처·고객 페인포인트를 적는다. "
+    "tam과 sam은 출처가 해당 범위를 명시한 경우에만 별도로 반환한다. 시장 전체 규모를 임의로 "
+    "기업의 TAM/SAM으로 바꾸거나 점유율을 가정해 계산하지 않는다. SAM 근거가 없으면 근거 부족으로 남긴다. "
     "시장 수치는 세부 시장 전체의 규모이며 평가 대상 기업의 매출이 아니다. "
     "category는 항상 null이다."
 )
@@ -118,7 +120,10 @@ class OpenAIGenerator:
         self.instructions = instructions
 
     def generate(self, *, company: str, question: str, hits: list, fields: tuple) -> GroundedResponse:
-        context = [{"chunk_id": hit.chunk.chunk_id, "text": hit.chunk.text} for hit in hits]
+        context = [{"chunk_id": hit.chunk.chunk_id, "text": hit.chunk.text,
+                    "segment_or_company": hit.chunk.company, "title": hit.chunk.title,
+                    "published_at": hit.chunk.published_at, "publisher": hit.chunk.publisher,
+                    "url": hit.chunk.url, "page": hit.chunk.page} for hit in hits]
         return openai_parse(
             instructions=self.instructions, schema=GroundedResponse,
             payload={"company": company, "question": question,

@@ -141,11 +141,12 @@ def make_market_node(**flags: Set[str]) -> Callable[[Dict[str, Any]], Dict[str, 
             data={
                 "market_size": "[MOCK] USD 10B (2026)",
                 "growth_rate": "[MOCK] 25% CAGR",
+                "customer_demand": ["[MOCK] 저전력 AI 추론 수요"],
                 # 확인되지 않은 매출은 0 이 아니라 None
                 "company_revenue": None,
             },
             claim_text=f"[MOCK] {name} 이 속한 시장은 연 25% 성장한다",
-            data_keys=["market_size", "growth_rate"],
+            data_keys=["market_size", "growth_rate", "customer_demand"],
             flags=flags,
         )
         update = {"market_analysis": result}

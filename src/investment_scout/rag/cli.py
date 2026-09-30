@@ -81,6 +81,9 @@ def _run(args) -> int:
         index.save(args.index)
         print(f"{len(index.chunks)}개 청크, KURE/Jina 인덱스 저장: {args.index}")
         return 0
+    if args.command == "pipeline" and not (args.market_index / "metadata.json").exists() and not args.allow_missing_market:
+        raise FileNotFoundError(f"시장 인덱스 없음: {args.market_index}. README의 시장 자료 collect/index를 먼저 실행하세요. "
+                                "진단용 부분 실행은 --allow-missing-market으로 명시해야 합니다.")
     index = _load_index(args.index)
     if args.command == "pipeline":
         from investment_scout.rag.pipeline import run_pipeline
@@ -92,7 +95,8 @@ def _run(args) -> int:
             print(f"경쟁사 웹 검색 비활성: {exc}")
             web = None
         final = run_pipeline(index, max_candidates=args.max_candidates, min_score=args.min_score,
-                             market_index=market, web_search=web, report_pdf=args.report_pdf)
+                             market_index=market, web_search=web, report_pdf=args.report_pdf,
+                             allow_missing_market=args.allow_missing_market)
         write_json(args.out, final)
         print("최종 State(보고서 포함)는 아래 경로에 저장됩니다.")
     elif args.command == "evaluate":
@@ -178,6 +182,8 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
     pipeline.add_argument("--max-candidates", type=int, default=20)
     pipeline.add_argument("--market-index", type=Path, default=Path("out/market_rag/index"))
+    pipeline.add_argument("--allow-missing-market", action="store_true",
+                          help="진단 전용: 시장 인덱스 없이 근거 부족으로 부분 실행 (정상 시장 평가가 아님)")
     pipeline.add_argument("--report-pdf", type=Path,
                           default=Path("output/pdf/investment_report.pdf"))
     pipeline.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.30")))

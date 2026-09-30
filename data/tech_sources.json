@@ -232,6 +232,15 @@
       "published_at": null
     },
     {
+      "document_id": "mobilint_quantization_patent",
+      "company": "Mobilint",
+      "url": "https://patents.google.com/patent/US20250181902A1/en",
+      "title": "Method and apparatus for evaluating quantized artificial neural network",
+      "document_type": "patent",
+      "published_at": "2025-06-05",
+      "max_pages": 3
+    },
+    {
       "document_id": "semunite_creditnews",
       "company": "Semunite",
       "url": "https://www.creditnews.kr/news/articleView.html?idxno=31304",

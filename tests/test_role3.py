@@ -12,6 +12,7 @@ from investment_scout.agents.investment_judge import (
     score_judgement,
 )
 from investment_scout.agents.market_analyst import MarketAnalyst, segments_for
+from investment_scout.agents.market_rules import market_fact_supported
 from investment_scout.evidence import drop_unsupported_claims, validate_source
 from investment_scout.rag.chunking import Chunk
 from investment_scout.rag.generation import Citation, Fact, GroundedResponse
@@ -33,8 +34,14 @@ DESIGN = {
     "투자조건 (Deal Terms)": (10, [("팀은 이 분야에서 믿을만한가?", 5),
                                ("투자 조건(Valuation 등)이 적정한 수준인가?", 5)]),
 }
-BUNDLE = [{"id": "tech_summary:tech_001", "text": "CEO 정한울은 삼성 출신이며 고객사에 샘플을 공급했다. 밸류에이션 공개"},
-          {"id": "market_analysis:market_001", "text": "market size"},
+BUNDLE = [{"id": "tech_summary:tech_001", "field": "tech_summary", "topic": "core_technology, advantages",
+           "text": "CEO 정한울은 삼성 출신이며 고객사에 샘플을 공급했다. 밸류에이션 공개"},
+          {"id": "market_analysis:market_001", "field": "market_analysis", "topic": "market_size",
+           "text": "시장 규모", "quoted_text": "The market was USD 10 billion in 2025"},
+          {"id": "market_analysis:demand", "field": "market_analysis", "topic": "customer_demand",
+           "text": "고객 수요", "quoted_text": "Customer demand is driven by lower power and latency"},
+          {"id": "market_analysis:traction", "field": "market_analysis", "topic": "customer_traction",
+           "text": "고객 반응", "quoted_text": "Customers deployed samples under supply contracts"},
           {"id": "profile:facts", "text": "{'funding_stage': 'SERIES_C'}"}]
 
 
@@ -44,8 +51,16 @@ def test_scorecard_matches_design_document():
 
 
 def judgement(scores: dict, risks=()):
-    return Judgement(items=[ItemScore(key=k, score=v, rationale="r", evidence_ids=["tech_summary:tech_001"])
-                            for k, v in scores.items()], risks=list(risks))
+    market_evidence = {
+        "market_size": "market_analysis:market_001",
+        "willingness_to_pay": "market_analysis:demand",
+        "early_traction": "market_analysis:traction",
+    }
+    return Judgement(items=[
+        ItemScore(key=k, score=v, rationale="r",
+                  evidence_ids=[market_evidence.get(k, "tech_summary:tech_001")])
+        for k, v in scores.items()
+    ], risks=list(risks))
 
 
 def full_marks(**overrides):
@@ -101,7 +116,11 @@ def test_threshold_boundary(deal_terms, decision):
 def test_judge_node_returns_scores_details_and_hold_reason():
     judge = InvestmentJudge(parse=lambda **kwargs: judgement({"market_size": 8}))
     state = {"current_startup": {"name": "A", "source_ids": []}, "source_evidence": {},
-             "tech_summary": {"claims": [{"claim_id": "tech_001", "text": "t", "citations": [{"url": "u"}]}]}}
+             "tech_summary": {"claims": []},
+             "market_analysis": {"claims": [{
+                 "claim_id": "market_001", "text": "시장 규모", "data_keys": ["market_size"],
+                 "source_ids": ["m1"], "citations": [{"url": "u", "quote": "The market was USD 10 billion in 2025"}],
+             }]}}
     update = judge(state)
     assert update["investment_decision"] == "HOLD"
     assert update["evaluation_scores"]["market"] == 8.0
@@ -144,24 +163,59 @@ class Quoting:
 def test_segments_follow_tech_category():
     available = {"AI_CHIP", "CXL_MEMORY", "SILICON_PHOTONICS", "IN_MEMORY_COMPUTE", "CHIPLET"}
     assert segments_for("NPU / AI_ACCELERATOR", available) == ["AI_CHIP"]
-    assert segments_for("IN_MEMORY_COMPUTE", available) == ["IN_MEMORY_COMPUTE", "AI_CHIP"]
+    assert segments_for("NPU", available | {"EDGE_AI"}, "edge inference NPU") == ["EDGE_AI"]
+    assert segments_for("IN_MEMORY_COMPUTE", available) == ["IN_MEMORY_COMPUTE"]
     assert segments_for("GPU / CXL", available) == ["CXL_MEMORY", "AI_CHIP"]
-    assert segments_for("근거 부족", available) == sorted(available)
+    assert segments_for("근거 부족", available) == []
+
+
+def test_tam_sam_require_explicit_amount_and_year_evidence():
+    assert market_fact_supported("tam", "TAM was USD 12 billion in 2025")
+    assert market_fact_supported("sam", "SAM is projected to reach $3.2 billion by 2030")
+    assert not market_fact_supported("tam", "The market is large")
+    assert not market_fact_supported("sam", "Assume a ten percent share")
 
 
 def test_market_analyst_cites_segment_reports_and_registers_sources():
-    index = FakeIndex([chunk("m1", "AI_CHIP", "The market is projected to reach $56.8 billion by 2030"),
+    text = ("Market size was $10 billion in 2025. CAGR was 20% from 2025 to 2030. "
+            "Customer demand for low power edge AI grew. TAM was $10 billion in 2025.")
+    index = FakeIndex([chunk("m1", "AI_CHIP", text),
                        chunk("m2", "CXL_MEMORY", "CXL memory appliance market grows at 33.3% CAGR")])
-    state = {"current_startup": {"name": "A"}, "tech_category": "NPU", "source_evidence": {"A": []}}
-    update = MarketAnalyst(index, generator=Quoting())(state)
+    state = {"current_startup": {"name": "A", "main_products": ["edge NPU"]},
+             "tech_category": "NPU", "source_evidence": {"A": []}}
+
+    class MarketQuoting:
+        def generate(self, **_kwargs):
+            values = {
+                "market_size": "2025년 시장 규모 100억 달러",
+                "growth_rate": "2025-2030 CAGR 20%",
+                "customer_demand": "저전력 edge AI 고객 수요",
+                "tam": "2025년 TAM 100억 달러",
+            }
+            quotes = {
+                "market_size": "Market size was $10 billion in 2025.",
+                "growth_rate": "CAGR was 20% from 2025 to 2030.",
+                "customer_demand": "Customer demand for low power edge AI grew.",
+                "tam": "TAM was $10 billion in 2025.",
+            }
+            return GroundedResponse(facts=[
+                Fact(field=field, text=value, category=None,
+                     citations=[Citation(chunk_id="m1", quote=quotes[field])])
+                for field, value in values.items()
+            ], missing_information=["근거 부족: sam"])
+
+    update = MarketAnalyst(index, generator=MarketQuoting())(state)
     result = update["market_analysis"]
     assert result["status"] == "OK" and result["segments"] == ["AI_CHIP"]
     assert {c["source_ids"][0] for c in result["claims"]} == {"m1"}
+    assert result["data"]["tam"] == "2025년 TAM 100억 달러"
+    assert "sam" not in result["data"]
+    assert "근거 부족: sam" in result["missing_information"]
     for source in update["source_evidence"]["A"]:
         validate_source(source)
     cleaned, dropped = drop_unsupported_claims(result, source_evidence=update["source_evidence"],
                                                field_name="market_analysis", startup="A")
-    assert dropped == [] and len(cleaned["claims"]) == 3
+    assert dropped == [] and len(cleaned["claims"]) == 4
 
 
 class FakeSearch:
@@ -201,13 +255,13 @@ def test_items_needing_specific_information_are_capped_without_it():
         ItemScore(key="early_traction", score=5, rationale="투자 유치", evidence_ids=["profile:facts"]),
     ], risks=[])
     items = {i["key"]: i for i in score_judgement(proposal, BUNDLE)["items"]}
-    assert (items["team"]["score"], items["deal_terms"]["score"], items["early_traction"]["score"]) == (0, 2, 2)
+    assert (items["team"]["score"], items["deal_terms"]["score"], items["early_traction"]["score"]) == (0, 2, 0)
     assert items["deal_terms"]["evidence_ids"] == ["profile:facts"]
     assert "상한 적용" in items["team"]["rationale"]
-    # 필요한 정보(대표 경력·고객 공급)가 인용 근거에 있으면 상한 없음
+    # 필요한 정보(대표 경력·고객 공급)가 올바른 주제의 인용 근거에 있으면 상한 없음
     ok = Judgement(items=[ItemScore(key="team", score=5, rationale="대표 경력", evidence_ids=["tech_summary:tech_001"]),
                           ItemScore(key="early_traction", score=5, rationale="샘플 공급",
-                                    evidence_ids=["tech_summary:tech_001"])], risks=[])
+                                    evidence_ids=["market_analysis:traction"])], risks=[])
     items = {i["key"]: i for i in score_judgement(ok, BUNDLE)["items"]}
     assert (items["team"]["score"], items["early_traction"]["score"]) == (5, 5)
 
@@ -216,7 +270,10 @@ def test_judge_uses_median_of_repeated_scoring():
     proposals = iter([judgement({"market_size": 2}), judgement({"market_size": 9}), judgement({"market_size": 6})])
     judge = InvestmentJudge(parse=lambda **kwargs: next(proposals), samples=3)
     state = {"current_startup": {"name": "A", "source_ids": []}, "source_evidence": {},
-             "tech_summary": {"claims": [{"claim_id": "tech_001", "text": "t", "citations": [{"url": "u"}]}]}}
+             "market_analysis": {"claims": [{
+                 "claim_id": "market_001", "text": "시장 규모", "data_keys": ["market_size"],
+                 "source_ids": ["m1"], "citations": [{"url": "u", "quote": "The market was USD 10 billion in 2025"}],
+             }]}}
     details = judge(state)["evaluation_details"]
     market_size = next(i for i in details["items"] if i["key"] == "market_size")
     assert market_size["score"] == 6 and market_size["samples"] == [2, 9, 6]

@@ -283,7 +283,7 @@ def validate_node_update(
 DEFAULT_REQUIRED_ANALYSIS_DATA: Dict[str, List[str]] = {
     # 팀 결정: 차별성은 점수표(경쟁 우위·제품/기술력)에서 평가하므로 필수 정보는 핵심 기술만.
     "tech_summary": ["core_technology"],
-    "market_analysis": ["market_size", "growth_rate"],
+    "market_analysis": ["market_size", "growth_rate", "customer_demand"],
     "competitor_analysis": ["main_competitors"],
 }
 

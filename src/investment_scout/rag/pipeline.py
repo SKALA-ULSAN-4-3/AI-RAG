@@ -111,7 +111,11 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
 
 
 def run_pipeline(index, *, max_candidates: int, min_score: float, market_index=None,
-                 web_search=None, judge=None, report_pdf=None, echo=print) -> dict:
+                 web_search=None, judge=None, report_pdf=None, echo=print,
+                 allow_missing_market: bool = False) -> dict:
+    if market_index is None and not allow_missing_market:
+        raise ValueError("시장 인덱스가 없습니다. 시장 문서 collect/index를 먼저 실행하세요. "
+                         "진단 실행만 허용하려면 allow_missing_market=True를 지정하세요.")
     scout = StartupScout(search_provider=get_search_provider("mock"))
     rest = make_production_nodes(retriever=None)
     if market_index is None:

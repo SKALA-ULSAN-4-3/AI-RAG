@@ -15,7 +15,7 @@ uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 
 | 에이전트 | 파일 | RAG | 입력 → 출력 |
 | --- | --- | --- | --- |
-| 📊 시장성 평가 | `agents/market_analyst.py` | O | `tech_category` → 세부 시장 → 시장 보고서 검색 → `market_analysis` (`market_size`, `growth_rate`, `customer_demand`) |
+| 📊 시장성 평가 | `agents/market_analyst.py` | O | `tech_category`·제품 사용처 → 세부 시장 → `market_analysis` (`market_size`, `growth_rate`, `customer_demand`, 선택 `tam`·`sam`) |
 | 🥊 경쟁사 비교 | `agents/competitor.py` | X | Tavily 웹 검색 + 자사 기술 근거 → `competitor_analysis` (`main_competitors`, `competitive_comparison`, `entry_barriers`) |
 | 🧮 투자 판단 | `agents/investment_judge.py` | X | 세 분석의 검증된 주장 + 후보 탐색 출처 → `evaluation_scores`, `evaluation_details`, `investment_decision`, `hold_reason` |
 
@@ -23,9 +23,11 @@ uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 
 ## 시장 자료 (200페이지 공유)
 
-`data/market_sources.json`의 `companies`는 기업이 아니라 세부 시장입니다: `AI_CHIP`, `CXL_MEMORY`, `SILICON_PHOTONICS`, `IN_MEMORY_COMPUTE`, `CHIPLET`. 시장조사 보도자료 6건을 `max_pages`로 수치가 있는 앞쪽만 보관해 18페이지입니다. `collect`는 기술·시장 자료집을 합산해 200페이지를 넘지 않게 막습니다(현재 179 + 18 = 197). 보도자료 뒤쪽의 관련 기사·광고·시세 페이지는 한도 낭비이자 검색 잡음(다른 시장의 수치)이라 제외했습니다.
+`data/market_sources.json`의 `companies`는 기업이 아니라 세부 시장입니다: `AI_CHIP`, `CXL_MEMORY`, `SILICON_PHOTONICS`, `IN_MEMORY_COMPUTE`, `CHIPLET`. 시장조사 보도자료 6건을 `max_pages`로 수치가 있는 앞쪽만 보관해 18페이지입니다. `collect`는 기술·시장 자료집을 합산해 200페이지를 넘지 않게 막습니다(현재 기술 182 + 시장 18 = 200). 보도자료 뒤쪽의 관련 기사·광고·시세 페이지는 한도 낭비이자 검색 잡음(다른 시장의 수치)이라 제외했습니다.
 
-기술 분류 → 세부 시장: NPU·AI_ACCELERATOR·GPU → AI_CHIP, CXL → CXL_MEMORY, PHOTONICS → SILICON_PHOTONICS, IN_MEMORY_COMPUTE → IN_MEMORY_COMPUTE(+AI_CHIP), OTHER → CHIPLET. 분류가 없으면 전체 시장에서 검색합니다. 특화 시장을 범용 AI 칩 시장보다 먼저 쓰고, 시장별로 검색 결과를 균등 배분합니다.
+기술 분류와 제품 사용처를 함께 사용합니다. NPU·AI_ACCELERATOR·GPU는 edge/data-center 사용처가 확인되면 해당 전용 세그먼트를 우선하고, 현재 자료집처럼 전용 세그먼트가 없으면 AI_CHIP으로 제한해 검색합니다. CXL → CXL_MEMORY, PHOTONICS → SILICON_PHOTONICS, IN_MEMORY_COMPUTE → IN_MEMORY_COMPUTE입니다. 분류나 사용처가 불명확하면 전체 시장으로 확대하지 않고 `근거 부족`을 반환합니다.
+
+`market_size`, `growth_rate`, `customer_demand`는 평가 필수 항목입니다. `tam`과 `sam`은 선택 항목으로 분리해 저장하되, 출처가 TAM/SAM 범위를 명시하고 금액·연도를 함께 제시한 경우에만 채택합니다. 전체 시장 규모나 가정한 점유율로 기업의 TAM/SAM을 계산하지 않으며, 근거가 없으면 해당 필드를 비우고 `missing_information`에 남깁니다.
 
 ## 투자 판단 기준 (RAG-Design 설계서 그대로)
 

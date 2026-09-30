@@ -39,6 +39,9 @@ SUPPORT_TOPICS = frozenset(
         "ai_core_business",
         "market_size",
         "growth_rate",
+        "customer_demand",
+        "tam",
+        "sam",
         "competitors",
     }
 )

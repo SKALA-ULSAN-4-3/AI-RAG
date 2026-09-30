@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "title": "반도체 스타트업 투자 검토 보고서 - 전원 보류 시나리오",
+  "is_demo": true,
+  "selected_company": {
+    "name": "Demo Hold Semiconductor",
+    "founded_year": 2022,
+    "main_products": ["Edge AI accelerator prototype"],
+    "funding_stage": "Seed",
+    "tech_category": "AI_ACCELERATOR"
+  },
+  "evaluated_companies": [
+    {"name": "Demo Hold Semiconductor", "decision": "HOLD", "score": 48},
+    {"name": "Demo Hold Memory", "decision": "HOLD", "score": 41}
+  ],
+  "market": {
+    "tam": "출처에서 확인된 데모 TAM",
+    "growth_rate": "데모 성장률",
+    "customer_demand": "저전력 엣지 추론 수요",
+    "interpretation": "전원 보류 보고서의 레이아웃과 종료 분기를 검증하는 합성 입력입니다.",
+    "source_ids": ["hold_market"]
+  },
+  "technology": {
+    "summary": "시제품 성능은 확인됐지만 양산 및 고객 검증 근거가 부족합니다.",
+    "category": "AI_ACCELERATOR",
+    "source_ids": ["hold_tech"]
+  },
+  "competition": {
+    "summary": "주요 경쟁사 대비 진입장벽과 고객 확보 근거가 제한적입니다.",
+    "source_ids": ["hold_competition"]
+  },
+  "scorecard": {
+    "market": {"score": 15, "reason": "시장 성장 근거는 있으나 SAM이 확인되지 않음", "source_ids": ["hold_market"]},
+    "technology": {"score": 20, "reason": "시제품 기술은 확인됐으나 상용화 근거 부족", "source_ids": ["hold_tech"]},
+    "competitive_advantage": {"score": 12, "reason": "차별성은 있으나 진입장벽 근거가 제한적", "source_ids": ["hold_competition"]},
+    "growth": {"score": 9, "reason": "확장 가능성은 있으나 고객·매출 근거 부족", "source_ids": ["hold_market"]},
+    "deal_terms": {"score": 2, "reason": "밸류에이션과 구체적인 투자 조건 미확인", "source_ids": ["hold_company"]}
+  },
+  "risks": [
+    {
+      "description": "양산 공정 검증이 완료되지 않아 일정 지연 가능성이 큼",
+      "fatal": true,
+      "penalty": -10,
+      "mitigation": "양산 파트너와 단계별 수율 검증 필요",
+      "source_ids": ["hold_tech"]
+    }
+  ],
+  "growth_outlook": [
+    {"description": "고객 PoC 확보 전까지 성장 전망을 보수적으로 평가", "source_ids": ["hold_market"]}
+  ],
+  "decision": "HOLD",
+  "decision_reason": "항목 합계 58점에서 치명 기술 리스크 10점을 차감해 48점으로 추천 기준 70점에 미달했습니다.",
+  "total_score": 48,
+  "summary": "두 개의 합성 후보를 평가했으나 모두 추천 기준을 충족하지 못했습니다. 최고 순위 후보도 총점 48점이고 치명 기술 리스크가 있어 전원 보류로 결정했습니다.",
+  "termination_reason": "ALL_HOLD",
+  "references": [
+    {"source_id": "hold_market", "publisher": "Demo Research", "title": "Demo Edge AI Market", "published_at": "2026-01-01", "accessed_at": "2026-09-30", "url": "https://example.com/hold-market"},
+    {"source_id": "hold_tech", "publisher": "Demo Hold Semiconductor", "title": "Prototype and Manufacturing Review", "published_at": "2026-02-01", "accessed_at": "2026-09-30", "url": "https://example.com/hold-technology"},
+    {"source_id": "hold_competition", "publisher": "Demo Research", "title": "Demo Competitor Review", "published_at": "2026-03-01", "accessed_at": "2026-09-30", "url": "https://example.com/hold-competition"},
+    {"source_id": "hold_company", "publisher": "Demo Hold Semiconductor", "title": "Funding Profile", "published_at": "2026-04-01", "accessed_at": "2026-09-30", "url": "https://example.com/hold-company"}
+  ]
+}

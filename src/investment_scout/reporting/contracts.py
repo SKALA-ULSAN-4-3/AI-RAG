@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import math
 from typing import Any
 
 from investment_scout.state import DECISION_HOLD, DECISION_RECOMMENDED
@@ -256,6 +257,28 @@ def _state_growth(record: dict) -> list[dict]:
     ]
 
 
+def _state_decision_reason(record: dict) -> str:
+    """역할 3의 확정 판정값으로 보고서용 판단 근거를 구성합니다."""
+    if record.get("hold_reason"):
+        return record["hold_reason"]
+
+    details = record.get("evaluation_details") or {}
+    scores = record.get("evaluation_scores") or {}
+    total = details.get("total", scores.get("total"))
+    threshold = details.get("threshold", 70)
+    if total is None:
+        return "역할 3 판단 근거 미제공"
+
+    if record.get("investment_decision") == DECISION_RECOMMENDED:
+        penalized = details.get("penalized_risk_types") or []
+        risk_text = ", ".join(penalized) if penalized else "없음"
+        return (
+            f"총점 {float(total):g}점으로 추천 기준 {float(threshold):g}점 이상을 충족했습니다. "
+            f"치명 리스크 감점 유형: {risk_text}."
+        )
+    return f"총점 {float(total):g}점으로 추천 기준 {float(threshold):g}점에 미달했습니다."
+
+
 def _handoff_from_state(state: dict) -> dict:
     record = _select_record(state)
     profile = record.get("profile") or state.get("current_startup") or {}
@@ -269,27 +292,49 @@ def _handoff_from_state(state: dict) -> dict:
     ]
     scorecard = _state_scorecard(record)
     risks = _state_risks(record)
-    summary = (
-        f"{profile.get('name', '선정 기업 없음')}에 대해 총 {len(state.get('evaluation_history', []))}개 후보를 "
-        f"평가했습니다. 최종 판단은 {record.get('investment_decision') or DECISION_HOLD}이며, "
-        f"상세 근거는 점수표와 리스크 항목에 제시합니다."
-    )
+    # LLM 재호출 없이 전달된 사실·평가 근거를 요약한다. 추가 투자 논리를 만들지 않는다.
+    summary_parts = [
+        f"{profile.get('name', '선정 기업 없음')}의 투자 의견은 "
+        f"{record.get('investment_decision') or DECISION_HOLD}입니다. "
+        f"총 {len(state.get('evaluation_history', []))}개 후보를 평가했습니다."
+    ]
+    if profile.get("main_products"):
+        summary_parts.append(f"주요 제품은 {_text(profile['main_products'])}입니다.")
+    for label, section, key in [("핵심 기술", technology, "core_technology"),
+                                ("시장 근거", market, "market_size")]:
+        value = (section.get("data") or {}).get(key)
+        if value:
+            summary_parts.append(f"{label}: {_text(value)[:180]}.")
+    reasons = [(value["score"] / SCORE_LIMITS[key][1], key, value.get("reason"))
+               for key, value in scorecard.items() if isinstance(value, dict) and value.get("reason")]
+    if reasons:
+        weakest = min(reasons)
+        summary_parts.append(f"주요 확인 과제({SCORE_LIMITS[weakest[1]][0]}): {weakest[2][:150]}.")
+    summary = " ".join(summary_parts)
     return {
         "schema_version": REPORT_SCHEMA_VERSION,
         "title": f"{state.get('target_domain', '반도체')} 스타트업 투자 검토 보고서",
         "selected_company": {**profile, "tech_category": record.get("tech_category")},
         "evaluated_companies": ranking,
         "market": {**(market.get("data") or {}), "summary": _claim_text(market),
+                   "claims": deepcopy(market.get("claims") or []),
+                   "missing_information": deepcopy(market.get("missing_information") or []),
                    "source_ids": _claim_ids(market)},
         "technology": {**(technology.get("data") or {}), "summary": _claim_text(technology),
+                       "claims": deepcopy(technology.get("claims") or []),
+                       "missing_information": deepcopy(technology.get("missing_information") or []),
                        "source_ids": _claim_ids(technology)},
         "competition": {**(competition.get("data") or {}), "summary": _claim_text(competition),
+                        "claims": deepcopy(competition.get("claims") or []),
                         "source_ids": _claim_ids(competition)},
+        "score_items": [{**deepcopy(item), "source_ids": _resolve_evidence_ids(
+            item.get("evidence_ids") or [], _evidence_id_map(record))}
+            for item in (record.get("evaluation_details") or {}).get("items", [])],
         "scorecard": scorecard,
         "risks": risks,
         "growth_outlook": _state_growth(record),
         "decision": record.get("investment_decision") or DECISION_HOLD,
-        "decision_reason": record.get("hold_reason") or "역할 3 판단 근거 미제공",
+        "decision_reason": _state_decision_reason(record),
         "total_score": (record.get("evaluation_scores") or {}).get("total"),
         "references": _state_sources(state),
         "summary": summary,
@@ -327,9 +372,39 @@ def normalize_report_input(payload: dict) -> dict:
                 f"total_score가 재계산값과 다릅니다: 제공={supplied_total}, 재계산={total}"
             )
 
-    used = score_sources | risk_sources
+    company = handoff.get("selected_company") or {}
+    if not isinstance(company, dict):
+        raise Role3HandoffError("selected_company는 객체여야 합니다.")
+    used = score_sources | risk_sources | set(_source_ids(company))
     for key in ("market", "technology", "competition"):
         used.update(_source_ids(handoff.get(key) or {}))
+        for claim in (handoff.get(key) or {}).get("claims", []):
+            used.update(_source_ids(claim))
+    score_items = handoff.get("score_items") or []
+    if not isinstance(score_items, list) or any(not isinstance(item, dict) for item in score_items):
+        raise Role3HandoffError("score_items는 객체 리스트여야 합니다.")
+    for item in score_items:
+        used.update(_source_ids(item))
+    series = (handoff.get("market") or {}).get("series")
+    if series is not None:
+        if not isinstance(series, dict) or not series.get("unit") or not _source_ids(series):
+            raise Role3HandoffError("market.series에 unit과 source_ids가 필요합니다.")
+        points = series.get("points")
+        if not isinstance(points, list) or not 2 <= len(points) <= 12:
+            raise Role3HandoffError("market.series.points는 2~12개여야 합니다.")
+        years = []
+        for point in points:
+            if not isinstance(point, dict):
+                raise Role3HandoffError("market.series.points 항목은 객체여야 합니다.")
+            year, value = point.get("year"), point.get("value")
+            if isinstance(year, bool) or not isinstance(year, int) or not 1900 <= year <= 2200:
+                raise Role3HandoffError("market.series.year는 연도 정수여야 합니다.")
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                raise Role3HandoffError("market.series.value는 유한한 0 이상 숫자여야 합니다.")
+            years.append(year)
+        if years != sorted(set(years)):
+            raise Role3HandoffError("market.series 연도는 중복 없이 오름차순이어야 합니다.")
+        used.update(_source_ids(series))
     growth = handoff.get("growth_outlook") or []
     if not isinstance(growth, list):
         raise Role3HandoffError("growth_outlook은 리스트여야 합니다.")
@@ -340,9 +415,6 @@ def normalize_report_input(payload: dict) -> dict:
     if missing:
         raise Role3HandoffError(f"사용된 source_id의 reference가 없습니다: {missing}")
 
-    company = handoff.get("selected_company") or {}
-    if not isinstance(company, dict):
-        raise Role3HandoffError("selected_company는 객체여야 합니다.")
     return {
         "schema_version": REPORT_SCHEMA_VERSION,
         "title": _text(handoff.get("title"), "반도체 스타트업 투자 검토 보고서"),
@@ -353,6 +425,7 @@ def normalize_report_input(payload: dict) -> dict:
         "technology": handoff.get("technology") or {},
         "competition": handoff.get("competition") or {},
         "scorecard": scorecard,
+        "score_items": score_items,
         "score_subtotal": subtotal,
         "risk_penalty": penalty,
         "total_score": total,
