@@ -10,7 +10,7 @@
 
 ## Progress
 
-- 역할 1~3(후보 탐색, 기술 RAG·분류, 시장·경쟁·투자 판단) 구현 완료. 역할 4(보고서)는 `feature/role4-report`에서 진행 중입니다.
+- 역할 1~3(후보 탐색, 기술 RAG·분류, 시장·경쟁·투자 판단)과 역할 4(5페이지 PDF 보고서 생성)가 하나의 그래프로 연결됩니다.
 - 자료: 기술 문서 179페이지 + 시장 보고서 21페이지 = **200/200페이지**. 기술 361개, 시장 39개 청크로 FAISS 인덱스를 만듭니다.
 - 검색 품질: 기술 46문항 **Hit@3 0.978, MRR@10 0.923**, 시장 16문항 **Hit@3 0.938, MRR@5 0.745** (하이브리드, KURE·Jina 단독보다 높음).
 - `pipeline`으로 20개 기업 전체 평가와 순위 선정까지 오류 없이 실행되는 것을 확인했습니다. LLM 응답에 따라 점수·순위는 실행마다 조금씩 달라질 수 있습니다.
@@ -25,6 +25,7 @@
 - 경쟁사 2~3곳을 웹 검색으로 찾아 제품·성능·고객·특허·파트너십·양산 역량별 비교
 - 설계서 Score Table·체크리스트(100점)로 채점하고 항목별 점수와 한 줄 이유, 리스크 감점을 기록
 - 전체 후보 평가 후 70점 이상 기업 중 1순위 추천, 없으면 전원 보류
+- 역할 3의 점수·리스크·출처를 검산해 Summary부터 Reference까지 5페이지 PDF 보고서 생성
 - 검색 품질 평가(Hit Rate@K, MRR)와 노드별 경과를 출력하는 통합 실행 명령
 
 ## Tech Stack
@@ -35,7 +36,7 @@
 - Retrieval: FAISS (IndexFlatIP) — 기술 Hit Rate@3 0.978, MRR@10 0.923 / 시장 Hit Rate@3 0.938, MRR@5 0.745
 - Embedding: `nlpai-lab/KURE-v1`(한국어), `jinaai/jina-embeddings-v5-text-small`(영문·장문), 질문 특성에 따라 0.7/0.3 가중 결합
 - Web Search: Tavily (경쟁사 비교)
-- PDF/Web: pypdf, Playwright
+- PDF/Web: pypdf, Playwright, ReportLab(보고서 PDF)
 
 ## Agents
 
@@ -47,7 +48,7 @@
 | 📊 시장성 평가 | O | 기술 분야에 맞는 세부 시장 보고서에서 시장 규모·CAGR·수요를 `market_analysis`로 반환 |
 | 🥊 경쟁사 비교 | X | 웹 검색으로 경쟁사 2~3곳과 6개 항목별 비교·진입장벽을 `competitor_analysis`로 반환 |
 | 🧮 투자 판단 | X | Score Table·체크리스트 채점, 리스크 감점, 기준 통과 여부와 근거를 `evaluation_scores`·`evaluation_details`로 반환 |
-| 📝 보고서 생성 | X | 역할 4 (`feature/role4-report`) |
+| 📝 보고서 생성 | X | 역할 3 결과를 검산하고 실제 사용한 출처만 포함한 5페이지 PDF와 Markdown 요약 생성 |
 
 ### 투자 판단 기준 (RAG-Design 설계서)
 
@@ -88,14 +89,17 @@ graph TD
 ├── src/investment_scout/
 │   ├── agents/                          # 탐색·기술 요약·기술 분류·시장성·경쟁사·투자 판단 에이전트
 │   ├── rag/                             # 수집·파싱·청킹·임베딩·FAISS·생성·평가·통합 실행(CLI)
+│   ├── reporting/                       # 역할 4 입력 계약·PDF 생성·LangGraph 노드·CLI
 │   ├── graph.py, state.py               # LangGraph 그래프와 State
 │   └── nodes/                           # 후보 선택·평가 저장·순위 선정
 ├── docs/
 │   ├── tech_rag.md                      # 기술 RAG 설치·실행·검증
 │   ├── role3.md                         # 시장·경쟁·투자 판단 기준과 실행
+│   ├── report_role4.md                  # 역할 3 연동 계약과 PDF 실행 안내
 │   └── graph.mmd                        # 그래프 흐름
 ├── tests/                               # 단위·통합 테스트 (API 호출 없음)
 ├── out/                                 # 수집 PDF·인덱스·실행 결과 (Git 제외)
+├── output/                              # 생성된 보고서 PDF (Git 제외)
 ├── .env.example                         # 환경변수 예시 (.env는 Git 제외)
 └── README.md
 ```
@@ -106,7 +110,7 @@ graph TD
 
 ```bash
 # 설치 (extra를 모두 지정: uv sync는 지정하지 않은 extra를 삭제합니다)
-uv sync --extra tech-rag --extra embeddings --extra live-search --group dev
+uv sync --extra tech-rag --extra embeddings --extra live-search --extra report --group dev
 uv run python -m playwright install chromium --only-shell
 
 # 자료 수집·인덱스 (기술 + 시장, 합산 200페이지 검사)
@@ -127,9 +131,22 @@ uv run python -m investment_scout.rag.cli pipeline                      # 20개 
 uv run pytest -q
 ```
 
-`collect`는 접근이 차단된 일부 URL 때문에 종료 코드 1을 반환할 수 있으며, 성공한 자료는 그대로 사용합니다. 최종 State는 `out/tech_rag/pipeline.json`에 저장됩니다. 상세 절차는 [기술 RAG 실행 안내](docs/tech_rag.md)와 [역할 3 안내](docs/role3.md)를 참고하세요.
+`pipeline`의 마지막 보고서 노드는 역할 4의 5페이지 PDF를 `output/pdf/investment_report.pdf`에 생성합니다. 경로는 `--report-pdf`로 바꿀 수 있습니다.
 
-`out/`과 `.env`는 Git에서 제외됩니다. 웹 자료와 OpenAI 응답은 시점에 따라 달라질 수 있어 결과가 완전히 같다고 보장하지 않습니다.
+### 보고서만 다시 생성
+
+역할 3의 전체 State 또는 인계 JSON으로 PDF를 만듭니다. `data/report_demo.json`은 레이아웃 확인용 합성 데모이며 실제 투자 자료가 아닙니다.
+
+```bash
+uv run investment-report --input out/tech_rag/pipeline.json --out output/pdf/investment_report.pdf
+uv run investment-report --input data/report_demo.json --out output/pdf/role4_demo_report.pdf
+```
+
+입력 필드, `evaluation_history` 자동 변환, LangGraph 연결 방법은 [역할 4 보고서 계약](docs/report_role4.md)을 참고하세요. 역할 4는 역할 3의 점수와 판단을 변경하지 않고 합계와 출처 연결만 검증합니다.
+
+`collect`는 접근이 차단된 일부 URL 때문에 종료 코드 1을 반환할 수 있으며, 성공한 자료는 그대로 사용합니다. 최종 State는 `out/tech_rag/pipeline.json`에 저장됩니다. 상세 절차는 [기술 RAG 실행 안내](docs/tech_rag.md), [역할 3 안내](docs/role3.md), [역할 4 보고서 계약](docs/report_role4.md)을 참고하세요.
+
+`out/`, `output/`, `.env`는 Git에서 제외됩니다. 웹 자료와 OpenAI 응답은 시점에 따라 달라질 수 있어 결과가 완전히 같다고 보장하지 않습니다.
 
 ## Contributors
 

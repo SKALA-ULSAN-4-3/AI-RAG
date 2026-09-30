@@ -18,6 +18,8 @@ embeddings = ["sentence-transformers>=5.1.0", "peft>=0.17", "transformers>=4.51"
 production = ["langchain-tavily>=0.2.12", "sentence-transformers>=5.1.0", "peft>=0.17", "transformers>=4.51"]
 # 기술 RAG: CPU FAISS, PDF 추출, 웹 PDF 저장, OpenAI 구조화 응답.
 tech-rag = ["faiss-cpu>=1.10", "numpy>=1.26", "pypdf>=6.0", "fonttools>=4.0", "playwright>=1.50", "openai>=2.0"]
+# 역할 4: 5페이지 PDF 작성 및 생성 후 검증.
+report = ["reportlab>=4.4", "pypdf>=6.0"]
 
 [dependency-groups]
 dev = ["pytest>=8.3.0"]
@@ -25,6 +27,7 @@ dev = ["pytest>=8.3.0"]
 [project.scripts]
 investment-scout = "investment_scout.cli:main"
 tech-rag = "investment_scout.rag.cli:main"
+investment-report = "investment_scout.reporting.cli:main"
 
 [build-system]
 requires = ["hatchling"]

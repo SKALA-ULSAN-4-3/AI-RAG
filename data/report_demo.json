@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "title": "반도체 스타트업 투자 검토 보고서",
+  "is_demo": true,
+  "selected_company": {
+    "name": "Demo Semiconductor",
+    "founded_year": 2021,
+    "main_products": ["AI inference accelerator"],
+    "funding_stage": "Series B",
+    "tech_category": "AI_ACCELERATOR"
+  },
+  "evaluated_companies": [
+    {"name": "Demo Semiconductor", "decision": "RECOMMENDED", "score": 78}
+  ],
+  "market": {
+    "tam": "데모 TAM 수치",
+    "sam": "데모 SAM 수치",
+    "growth_rate": "데모 성장률",
+    "customer_demand": "데이터센터 추론 비용과 전력 효율 개선 수요",
+    "target_customers": "클라우드 및 데이터센터 사업자",
+    "interpretation": "이 파일은 역할 4의 레이아웃과 입력 계약 검증만을 위한 합성 예시입니다.",
+    "source_ids": ["demo_market"]
+  },
+  "technology": {
+    "summary": "전력 효율을 목표로 설계된 데모 AI 추론 가속기입니다.",
+    "category": "AI_ACCELERATOR",
+    "source_ids": ["demo_tech"]
+  },
+  "competition": {
+    "summary": "성능, 고객, 특허, 파트너십 및 양산 역량을 기준으로 비교한 데모 결과입니다.",
+    "source_ids": ["demo_competition"]
+  },
+  "scorecard": {
+    "market": {"score": 20, "reason": "시장 규모와 고객 수요 근거 확인", "source_ids": ["demo_market"]},
+    "technology": {"score": 24, "reason": "핵심 기술 및 상용화 역량 확인", "source_ids": ["demo_tech"]},
+    "competitive_advantage": {"score": 15, "reason": "차별성과 파트너십 근거 확인", "source_ids": ["demo_competition"]},
+    "growth": {"score": 11, "reason": "확장 구조와 장기 경쟁력 검토", "source_ids": ["demo_market"]},
+    "deal_terms": {"score": 8, "reason": "팀과 투자 조건 검토", "source_ids": ["demo_company"]}
+  },
+  "risks": [],
+  "growth_outlook": [
+    {"description": "제품 적용 고객군 확대 가능성", "source_ids": ["demo_market"]},
+    {"description": "양산 및 공급망 실행력은 지속 확인 필요", "source_ids": ["demo_company"]}
+  ],
+  "decision": "RECOMMENDED",
+  "decision_reason": "총점 78점이며 역할 3에서 치명 리스크가 보고되지 않았다는 데모 판단입니다.",
+  "total_score": 78,
+  "summary": "Demo Semiconductor는 AI 추론 가속기 시장을 대상으로 하는 합성 기업입니다. 본 보고서는 실제 투자 의견이 아니라 역할 4 코드의 5페이지 구성, 점수표, 리스크 및 실제 사용 출처 필터링을 검증하기 위한 데모 결과입니다.",
+  "references": [
+    {"source_id": "demo_market", "publisher": "Demo Research", "title": "Demo AI Accelerator Market", "published_at": "2026-01-01", "accessed_at": "2026-09-30", "url": "https://example.com/demo-market"},
+    {"source_id": "demo_tech", "publisher": "Demo Semiconductor", "title": "Demo Product Brief", "published_at": "2026-02-01", "accessed_at": "2026-09-30", "url": "https://example.com/demo-product"},
+    {"source_id": "demo_competition", "publisher": "Demo Research", "title": "Demo Competitive Landscape", "published_at": "2026-03-01", "accessed_at": "2026-09-30", "url": "https://example.com/demo-competition"},
+    {"source_id": "demo_company", "publisher": "Demo Semiconductor", "title": "Demo Company Profile", "published_at": "2026-04-01", "accessed_at": "2026-09-30", "url": "https://example.com/demo-company"},
+    {"source_id": "unused_reference", "publisher": "Unused", "title": "This source must not appear", "published_at": null, "accessed_at": "2026-09-30", "url": "https://example.com/unused"}
+  ]
+}

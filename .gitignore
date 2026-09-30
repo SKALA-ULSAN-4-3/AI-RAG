@@ -6,3 +6,4 @@ __pycache__/
 pytest-cache-files-*/
 .DS_Store
 out/
+output/
