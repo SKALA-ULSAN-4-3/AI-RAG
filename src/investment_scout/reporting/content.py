@@ -325,20 +325,36 @@ def summary_lines(c: dict) -> list[tuple[str, str]]:
     return [(label, shorten(re.sub(r"\[\d+\]", "", text), 150)) for label, text in lines]
 
 
+def _reason(item: dict, limit: int = 45) -> str:
+    return shorten(re.sub(r"\[\d+\]|\(코드 규칙:.*?\)|\[코드 규칙:.*?\]", "", item["rationale"]).strip(" ."), limit)
+
+
 def narrative(c: dict) -> str:
-    """1페이지 서술 문단: 어떤 과정을 거쳐 어떤 결론이 나왔는지 한 문단으로."""
-    p = c["process"]
-    rivals = ", ".join(c["competitors"]) or "확인된 경쟁사 없음"
-    tech_claims = sum(len(v) for v in c["tech"].values())
-    conclusion = (f"{c['company']}를 최종 투자 추천 기업으로 선정했습니다" if c["recommended"]
-                  else f"추천 기준을 넘은 기업이 없어 전원 보류로 결론 내렸으며, 최고점 후보는 {c['company']}입니다")
-    return (f"스타트업 탐색 에이전트가 국내 {p['kr']}개·해외 {p['overseas']}개 후보의 비상장·투자 단계·Exit 여부를 확인한 뒤, "
-            f"각 후보마다 기술 요약·분류 에이전트가 기술 문서에서 근거를 찾고(선정 기업 {tech_claims}건, 분류: {c['profile']['기술 분류']}), "
-            f"시장성 평가 에이전트가 세부 시장 보고서를({'/'.join(c['segments'][:2]) or '해당 시장'}: {c['market_brief']}), "
-            f"경쟁사 비교 에이전트가 웹 검색으로 경쟁사({rivals})를 분석했습니다. 투자 판단 에이전트는 설계서의 13개 체크리스트를 "
-            f"3회 채점해 항목별 중앙값을 쓰고({c['sample_totals']}), 치명 리스크를 유형별로 감점했습니다. 그 결과 {p['evaluated']}개사 중 "
-            f"{p['qualified']}개사가 70점 기준을 통과했고 {p['forced']}개사는 핵심 정보 부족으로 보류되었으며, "
-            f"총점 {c['total']:.0f}점으로 {conclusion}.")
+    """1페이지 서술 문단: 왜 그렇게 판단했는지(강점 근거·시장·경쟁·감점·다른 후보와의 비교)."""
+    items = sorted(c["items"], key=lambda i: (-(i["score"] / i["max_points"]), -i["max_points"]))
+    strong = [i for i in items if i["score"] == i["max_points"]][:3] or items[:2]
+    weak = [short_question(i) for i in reversed(items) if i["score"] < i["max_points"] / 2][:3]
+    fatal = c["penalized_risk_types"]
+    risk = (f"기술·운영·법률 치명 리스크 {', '.join(fatal)}로 {c['risk_penalty']}점 감점되었습니다" if fatal
+            else "기술·운영·법률 치명 리스크는 확인되지 않았습니다")
+    market = f"{'/'.join(c['segments'][:1]) or '해당'} 시장은 {c['market_brief']}"
+    ranking = c["ranking"]
+    if c["recommended"]:
+        reasons = ", ".join(f"{short_question(i)}({i['score']}/{i['max_points']}점: {_reason(i)})" for i in strong)
+        others = [r for r in ranking if r["status"] == "기준 통과"]
+        held = [r["startup"] for r in ranking if r["total"] >= c["total"] and r["status"] == "보류(핵심 정보 부족)"]
+        compare = f"총점 {c['total']:.0f}점으로 기준 통과 {c['process']['qualified']}개사 중 1위"
+        compare += f"(2위 {others[0]['startup']} {others[0]['total']:.0f}점)" if others else ""
+        if held:
+            compare += f"이며, 같거나 높은 점수의 {', '.join(held[:3])}는 핵심 정보가 부족해 추천에서 제외했습니다"
+        penalty = f"반면 {', '.join(weak)} 항목은 공개 자료로 확인되지 않아 감점되었고, " if weak else ""
+        return (f"{c['company']}를 추천한 핵심 이유는 {reasons}입니다. {market}로 성장 여력이 있고, "
+                f"{', '.join(c['competitors'][:3]) or '경쟁사'}와의 비교에서도 차별화 근거가 확인되었습니다. "
+                f"{penalty}{risk}. {compare}.")
+    gaps = ", ".join(weak) or "여러 항목"
+    return (f"평가한 {c['process']['evaluated']}개사 중 추천 기준 70점을 넘은 기업이 없어 전원 보류로 판단했습니다. "
+            f"최고점 후보 {c['company']}({c['total']:.0f}점)도 {gaps} 항목에서 근거가 부족했고, {risk}. "
+            f"{market}로 시장 자체의 성장성은 확인되므로, 부족한 항목의 1차 자료를 보강한 뒤 재평가를 권고합니다.")
 
 
 def short_question(item: dict) -> str:

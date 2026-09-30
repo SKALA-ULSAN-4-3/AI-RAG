@@ -84,8 +84,9 @@ def test_content_uses_agent_results_for_recommended_company(state):
     assert "기준 통과 1개사" in labels["평가 과정"] and "핵심 정보 부족 보류 1개사" in labels["평가 과정"]
     assert "2025년 18억 달러 → 2033년 37억 달러" in labels["시장"] and "9.57%" in labels["시장"]
     assert all(len(text) <= 150 for _, text in content["summary"])
-    assert "3개사 중 1개사가 70점 기준을 통과" in content["narrative"]
-    assert content["narrative"].endswith("Alpha를 최종 투자 추천 기업으로 선정했습니다.")
+    assert content["narrative"].startswith("Alpha를 추천한 핵심 이유는 독창적 기술(15/15점")
+    assert "같거나 높은 점수의 Beta는 핵심 정보가 부족해 추천에서 제외" in content["narrative"]
+    assert "반면" not in content["narrative"]  # 절반 미만 항목이 없으면 감점 문장 생략
     statuses = {row["startup"]: row["status"] for row in content["ranking"]}
     assert statuses == {"Alpha": "추천", "Beta": "보류(핵심 정보 부족)", "Gamma": "보류(70점 미만)"}
 
@@ -108,6 +109,7 @@ def test_all_hold_reports_top_candidate_as_hold(state):
     content = build_report_content(held)
     assert content["company"] == "Beta" and not content["recommended"]
     assert dict(content["summary"])["결론"].startswith("전원 보류")
+    assert "추천 기준 70점을 넘은 기업이 없어 전원 보류" in content["narrative"]
 
 
 def test_reference_formats_follow_guide():
@@ -138,6 +140,7 @@ def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
     for heading in ("1. Summary", "2. 선정 시장", "3. 선정 기업", "4. 성장가능성과 리스크", "5. Reference"):
         assert heading in text
     assert "Never cited" not in text
+    assert "울산 캠퍼스 4반 3조(신한수, 안영준, 정하윤, 손수경, 손경락)" in text
 
 
 def test_markdown_summary_contains_scores(state):

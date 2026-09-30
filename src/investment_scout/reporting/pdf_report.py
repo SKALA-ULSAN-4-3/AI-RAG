@@ -15,6 +15,8 @@ from typing import Any
 from investment_scout.reporting.content import FIELD_LABELS, shorten
 
 MAX_PDF_PAGES = 5
+TEAM = "울산 캠퍼스 4반 3조"
+MEMBERS = "신한수, 안영준, 정하윤, 손수경, 손경락"
 NAVY, TEAL, GREEN, RED, GREY = "#102A43", "#0B7285", "#2B8A3E", "#C92A2A", "#829AB1"
 
 
@@ -48,7 +50,7 @@ def _register_font() -> str:
     return name
 
 
-def render_pdf_report(content: dict, output: Path, *, team: str = "울산 캠퍼스 4반 3조") -> dict:
+def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members: str = MEMBERS) -> dict:
     try:
         from pypdf import PdfReader
         from reportlab.graphics.charts.barcharts import HorizontalBarChart, VerticalBarChart
@@ -180,7 +182,8 @@ def render_pdf_report(content: dict, output: Path, *, team: str = "울산 캠퍼
                                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                                        ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5)]))
     half = [P(k["title"], title_s),
-            P(f"{team} · 작성일 {date.today().isoformat()} · 평가 대상: AI 반도체 스타트업 {p['evaluated']}개사", small),
+            P(f"{team}({members})", body),
+            P(f"작성일 {date.today().isoformat()} · 평가 대상: AI 반도체 스타트업 {p['evaluated']}개사", small),
             Spacer(1, 5), cards, Spacer(1, 6), P("1. Summary", h1), summary_table, Spacer(1, 6),
             P(k["narrative"], body)]
     # 1페이지는 요약만: 반 페이지 틀로 제한하고 나머지는 비움.

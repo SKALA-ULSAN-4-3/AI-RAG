@@ -7,16 +7,16 @@ from typing import Any, Callable, Dict
 
 from investment_scout.contracts import validate_node_update
 from investment_scout.reporting.content import build_report_content
-from investment_scout.reporting.pdf_report import build_markdown_report, render_pdf_report
+from investment_scout.reporting.pdf_report import MEMBERS, TEAM, build_markdown_report, render_pdf_report
 
 
-def make_report_node(output_path: Path | str, *, team: str = "울산 캠퍼스 4반 3조"
+def make_report_node(output_path: Path | str, *, team: str = TEAM, members: str = MEMBERS
                      ) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
     output = Path(output_path)
 
     def generate_report(state: Dict[str, Any]) -> Dict[str, Any]:
         content = build_report_content(state)
-        render_pdf_report(content, output, team=team)
+        render_pdf_report(content, output, team=team, members=members)
         return validate_node_update({"final_report": build_markdown_report(content)},
                                     allowed_fields=("final_report",), node_name="generate_report")
 

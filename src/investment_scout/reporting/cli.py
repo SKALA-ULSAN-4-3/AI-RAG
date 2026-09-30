@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 
 from investment_scout.reporting.content import build_report_content
-from investment_scout.reporting.pdf_report import build_markdown_report, render_pdf_report
+from investment_scout.reporting.pdf_report import MEMBERS, TEAM, build_markdown_report, render_pdf_report
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,7 +21,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="pipeline이 저장한 최종 State JSON")
     parser.add_argument("--out", type=Path, default=Path("output/pdf/investment_report.pdf"))
     parser.add_argument("--markdown-out", type=Path, default=None)
-    parser.add_argument("--team", default="울산 캠퍼스 4반 3조")
+    parser.add_argument("--team", default=TEAM)
+    parser.add_argument("--members", default=MEMBERS)
     return parser
 
 
@@ -29,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         content = build_report_content(json.loads(args.input.read_text(encoding="utf-8")))
-        result = render_pdf_report(content, args.out, team=args.team)
+        result = render_pdf_report(content, args.out, team=args.team, members=args.members)
         if args.markdown_out:
             args.markdown_out.parent.mkdir(parents=True, exist_ok=True)
             args.markdown_out.write_text(build_markdown_report(content), encoding="utf-8")
