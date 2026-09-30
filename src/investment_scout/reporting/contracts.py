@@ -144,11 +144,17 @@ def _references(raw: Any) -> dict[str, dict]:
 
 
 def _state_sources(state: dict) -> list[dict]:
-    sources = []
+    # 시장 보고서 청크는 세부 시장 단위라 같은 출처가 여러 기업에 등록됨: 같은 source_id는 하나로 병합.
+    sources: dict[str, dict] = {}
     for items in (state.get("source_evidence") or {}).values():
-        if isinstance(items, list):
-            sources.extend(item for item in items if isinstance(item, dict))
-    return sources
+        for item in items if isinstance(items, list) else []:
+            if not isinstance(item, dict):
+                continue
+            known = sources.get(item.get("source_id"))
+            if known is not None and known.get("url") != item.get("url"):
+                raise Role3HandoffError(f"같은 source_id에 서로 다른 출처가 있습니다: {item.get('source_id')}")
+            sources.setdefault(item.get("source_id"), item)
+    return list(sources.values())
 
 
 def _select_record(state: dict) -> dict:

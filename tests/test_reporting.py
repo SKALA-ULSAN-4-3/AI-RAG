@@ -165,3 +165,14 @@ def test_pdf_is_exactly_five_pages_and_contains_only_used_references(demo_payloa
     assert len(reader.pages) == 5
     assert "Demo Product Brief" in text
     assert "This source must not appear" not in text
+
+
+def test_state_sources_merge_market_chunk_shared_by_companies():
+    from investment_scout.reporting.contracts import Role3HandoffError, _state_sources
+
+    chunk = {"source_id": "m_dc:p2:s1:c1", "url": "https://example.com/market"}
+    merged = _state_sources({"source_evidence": {"A": [chunk], "B": [dict(chunk)]}})
+    assert merged == [chunk]
+    conflict = {"source_evidence": {"A": [chunk], "B": [{**chunk, "url": "https://other.example"}]}}
+    with pytest.raises(Role3HandoffError):
+        _state_sources(conflict)
