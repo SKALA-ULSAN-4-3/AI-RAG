@@ -1,6 +1,6 @@
 # AI Startup Investment Evaluation Agent
 
-본 프로젝트는 Semiconductor 스타트업의 투자 가능성을 평가하는 에이전트를 설계하고 구현한 실습 프로젝트입니다. 이 문서는 현재 구현한 **2번 담당 영역: 기술 RAG·기술 분류**를 중심으로 작성했습니다.
+본 프로젝트는 Semiconductor 스타트업의 투자 가능성을 평가하는 에이전트를 설계하고 구현한 실습 프로젝트입니다. 후보 탐색, 기술 RAG, 시장·경쟁·투자판단과 역할 4의 5페이지 PDF 보고서 생성을 연결할 수 있습니다.
 
 ## Overview
 
@@ -23,6 +23,7 @@
 - 헤딩·페이지 기준 청킹 및 KURE/Jina 이중 임베딩을 사용하는 FAISS 검색
 - 출처 URL과 PDF 페이지를 포함한 기술 장점·한계·상용화 상태 요약 및 기술 분야 분류
 - 확인 가능한 근거가 없을 때 `근거 부족` 반환, 담당 역할 3에 전달할 JSON·자료 ZIP 생성
+- 역할 3의 점수·리스크·출처를 검증해 Summary부터 Reference까지 5페이지 PDF 생성
 
 ## Tech Stack
 
@@ -40,6 +41,7 @@
 - 시장성 평가 에이전트 (RAG): 세부 시장 보고서 근거로 시장 규모·성장률·수요를 `market_analysis`로 반환
 - 경쟁사 비교 에이전트: 웹 검색 근거로 경쟁사·비교·진입장벽을 `competitor_analysis`로 반환
 - 투자 판단 에이전트: 설계서 Score Table·체크리스트(100점)로 채점, 기술·운영·법률 치명 리스크 유형별 −10점. 전체 후보를 평가한 뒤 70점 이상 기업 중 1순위를 추천, 없으면 전원 보류
+- 보고서 생성 에이전트: 역할 3 결과를 검산하고 실제 사용 출처만 포함한 5페이지 PDF와 Markdown 요약 생성
 
 역할 3의 기준·실행 방법은 [역할 3 안내](docs/role3.md)를 참고하세요.
 
@@ -47,13 +49,12 @@
 
 ```mermaid
 flowchart LR
-    A[공식 자료 목록] --> B[웹 PDF 저장·PDF 파싱]
-    B --> C[페이지·헤딩 청킹]
-    C --> D[KURE·Jina 임베딩]
-    D --> E[FAISS 검색]
-    E --> F[기술 요약]
-    F --> G[기술 분류]
-    G --> H[tech_summary·tech_category·인용 근거]
+    A[스타트업 탐색] --> B[기술 요약 RAG]
+    B --> C[기술 분류]
+    C --> D[시장성 평가 RAG]
+    D --> E[경쟁사 비교]
+    E --> F[투자 판단·전체 순위]
+    F --> G[5페이지 PDF 보고서]
 ```
 
 기술 노드의 기존 LangGraph 연결 방법은 [기술 RAG 실행 안내](docs/tech_rag.md)를 참고하세요.
@@ -66,7 +67,9 @@ flowchart LR
 │   ├── tech_analyst.py                  # 기술 요약 에이전트
 │   └── tech_classifier.py               # 기술 분류 에이전트
 ├── src/investment_scout/rag/             # 수집·파싱·청킹·임베딩·FAISS·CLI
+├── src/investment_scout/reporting/       # 역할 4 입력 계약·PDF·LangGraph 노드·CLI
 ├── docs/tech_rag.md                      # 설치, 실행 및 역할 3 전달 안내
+├── docs/report_role4.md                  # 역할 3 연동 계약과 PDF 실행 안내
 ├── tests/                                # 기술 RAG 검증 테스트
 ├── out/tech_rag/                         # 수집 PDF·인덱스·결과물 (Git 제외)
 ├── .env.example                          # 환경변수 예시 (.env는 Git 제외)
@@ -123,3 +126,26 @@ uv run python -m investment_scout.rag.cli pipeline     # 탐색→기술 요약�
 `verify`는 6개 질문의 검색 결과를 만들지만, 본문이 질문의 답을 실제로 뒷받침하는지는 사람이 확인해야 합니다. `analyze`는 20개 기업의 `tech_summary`·`tech_category`를 `out/tech_rag/analyze.json`에 저장합니다. 역할 3에 넘길 인용 근거와 원본 PDF는 `out/tech_rag/tech_handoff.zip`에 묶입니다. 상세 검증 방법은 [기술 RAG 실행 안내](docs/tech_rag.md)를 참고하세요.
 
 `out/`과 `.env`는 Git에서 제외됩니다. 새 환경에서 다시 수집하면 웹 자료나 OpenAI 응답이 달라질 수 있으므로 결과 파일이 완전히 같다고 보장할 수 없습니다. 같은 PDF 페이지를 기준으로 검토하려면 생성한 자료 ZIP을 별도로 전달해야 합니다.
+
+### 4번: 최종 보고서 생성
+
+역할 3의 전체 State 또는 인계 JSON으로 5페이지 PDF를 생성합니다.
+
+```bash
+uv sync --extra report --group dev
+uv run investment-report \
+  --input out/role3/handoff.json \
+  --out output/pdf/investment_report.pdf
+```
+
+역할 3 실행 전에는 합성 데모로 레이아웃을 확인할 수 있습니다. 데모 수치는 실제 투자 자료가 아닙니다.
+
+```bash
+uv run investment-report \
+  --input data/report_demo.json \
+  --out output/pdf/role4_demo_report.pdf
+```
+
+입력 필드, 기존 `evaluation_history` 자동 변환, LangGraph 연결 방법은 [역할 4 보고서 계약](docs/report_role4.md)을 참고하세요. 역할 4는 역할 3의 점수와 판단을 변경하지 않고 합계와 출처 연결만 검증합니다.
+
+전체 그래프의 `pipeline` 명령에는 역할 4가 연결되어 있으며 기본 출력은 `output/pdf/investment_report.pdf`입니다. 경로를 바꾸려면 `--report-pdf`를 사용합니다.

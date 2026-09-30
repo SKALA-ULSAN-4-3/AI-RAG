@@ -57,7 +57,7 @@ def test_state_typeddict_keeps_original_field_names_and_types():
     assert str(hints["current_startup"]) == "typing.Dict[str, typing.Any]"
     assert str(hints["evaluation_scores"]) == "typing.Dict[str, float]"
     assert hints["investment_decision"] is str
-    assert str(hints["hold_reason"]) == "typing.Optional[str]"
+    assert hints["hold_reason"] == typing.Optional[str]
     assert hints["final_report"] is str
     assert hints["candidate_index"] is int
     assert hints["max_candidates"] is int

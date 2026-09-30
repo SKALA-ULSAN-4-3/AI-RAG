@@ -92,7 +92,7 @@ def _run(args) -> int:
             print(f"경쟁사 웹 검색 비활성: {exc}")
             web = None
         final = run_pipeline(index, max_candidates=args.max_candidates, min_score=args.min_score,
-                             market_index=market, web_search=web)
+                             market_index=market, web_search=web, report_pdf=args.report_pdf)
         write_json(args.out, final)
         print("최종 State(보고서 포함)는 아래 경로에 저장됩니다.")
     elif args.command == "evaluate":
@@ -178,6 +178,8 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
     pipeline.add_argument("--max-candidates", type=int, default=20)
     pipeline.add_argument("--market-index", type=Path, default=Path("out/market_rag/index"))
+    pipeline.add_argument("--report-pdf", type=Path,
+                          default=Path("output/pdf/investment_report.pdf"))
     pipeline.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.30")))
     pipeline.add_argument("--out", type=Path, default=Path("out/tech_rag/pipeline.json"))
     evaluation = commands.add_parser("evaluate", help="정답셋으로 Hit Rate@K·MRR 측정 (OpenAI 호출 없음)")

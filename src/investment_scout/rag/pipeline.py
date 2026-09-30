@@ -1,7 +1,7 @@
 """통합 실행: 설계서 그래프를 실제 에이전트로 돌리며 노드별 경과 출력.
 
 탐색·기술 요약·기술 분류(역할 1·2), 시장성·경쟁사·투자 판단(역할 3)은 실제 에이전트.
-보고서(역할 4)는 구현 전까지 기존 근거 기반 노드(nodes/production.py)를 자리 표시로 사용.
+보고서 경로를 주면 역할 4의 5페이지 PDF 노드를 사용하고, 생략하면 테스트용 자리 표시 노드를 사용.
 시장 인덱스가 없으면 시장성, Tavily 키가 없으면 경쟁사 노드도 자리 표시로 대체하고 그 사실을 출력.
 """
 
@@ -14,6 +14,7 @@ from investment_scout.agents.tech_classifier import TechClassifier
 from investment_scout.graph import build_graph, recommended_recursion_limit
 from investment_scout.nodes.production import make_production_nodes
 from investment_scout.rag.integration import with_technical_sources
+from investment_scout.reporting import make_report_node
 from investment_scout.search import get_search_provider
 from investment_scout.state import create_initial_state
 
@@ -105,12 +106,12 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
             lines.append(f"   → 최종 추천: {chosen}" if chosen else "   → 70점 이상 기업 없음: 전원 보류")
         return lines
     if node == "generate_report":
-        return ["", f"📝 보고서 생성: 종료 사유 {state.get('termination_reason')} {PLACEHOLDER}"]
+        return ["", f"📝 보고서 생성 완료: 종료 사유 {state.get('termination_reason')}"]
     return [f"  {node}"]
 
 
 def run_pipeline(index, *, max_candidates: int, min_score: float, market_index=None,
-                 web_search=None, judge=None, echo=print) -> dict:
+                 web_search=None, judge=None, report_pdf=None, echo=print) -> dict:
     scout = StartupScout(search_provider=get_search_provider("mock"))
     rest = make_production_nodes(retriever=None)
     if market_index is None:
@@ -123,7 +124,8 @@ def run_pipeline(index, *, max_candidates: int, min_score: float, market_index=N
         category_node=TechClassifier(index, min_score=min_score),
         market_node=MarketAnalyst(market_index, min_score=min_score) if market_index else rest["market_node"],
         competitor_node=CompetitorAnalyst(web_search) if web_search else rest["competitor_node"],
-        decision_node=judge or InvestmentJudge(), report_node=rest["report_node"],
+        decision_node=judge or InvestmentJudge(),
+        report_node=make_report_node(report_pdf) if report_pdf else rest["report_node"],
     )
     state = dict(create_initial_state("Semiconductor", max_candidates=max_candidates))
     config = {"recursion_limit": recommended_recursion_limit(max_candidates)}
