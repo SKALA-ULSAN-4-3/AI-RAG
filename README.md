@@ -52,7 +52,7 @@ graph TD
     H --> G[보고서 생성]
 ```
 
-<sub>**설계서(RAG-Design) 대비 변경 사항** — 구현 중 팀 결정으로 조정했습니다.<br>
+<sub>**설계서 대비 변경 사항**<br>
 ① 그래프: 첫 추천 기업에서 종료 → 20개사 전체 평가 후 70점 이상 기업 중 1순위 추천(없으면 전원 보류), `final_ranking`·`recommended_startup` 추가<br>
 ② State: 반복 제어·근거 전달용 필드 추가(`candidate_index`, `evaluation_history`, `source_evidence`, `evaluation_details` 등)<br>
 ③ 평가: 추천 기준선 70점 확정, 리스크는 기술·운영·법률 유형별 −10점, 3회 채점 중앙값 사용<br>
