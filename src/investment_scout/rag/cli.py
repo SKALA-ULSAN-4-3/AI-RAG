@@ -72,7 +72,12 @@ def _run(args) -> int:
         print(f"{len(index.chunks)}개 청크, KURE/Jina 인덱스 저장: {args.index}")
         return 0
     index = _load_index(args.index)
-    if args.command == "evaluate":
+    if args.command == "pipeline":
+        from investment_scout.rag.pipeline import run_pipeline
+        final = run_pipeline(index, max_candidates=args.max_candidates, min_score=args.min_score)
+        write_json(args.out, final)
+        print("최종 State(보고서 포함)는 아래 경로에 저장됩니다.")
+    elif args.command == "evaluate":
         from investment_scout.rag.evaluation import evaluate
         report = evaluate(index, read_json(args.eval)["items"], ks=tuple(args.k))
         write_json(args.out, report)
@@ -148,6 +153,11 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--directory", type=Path, default=Path("out/tech_rag/documents"))
     package.add_argument("--manifest", type=Path, default=Path("data/tech_sources.json"))
     package.add_argument("--out", type=Path, default=Path("out/tech_rag/tech_handoff.zip"))
+    pipeline = commands.add_parser("pipeline", help="탐색→기술 요약→기술 분류 그래프 실행, 노드별 경과 출력 (OpenAI 호출)")
+    pipeline.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
+    pipeline.add_argument("--max-candidates", type=int, default=20)
+    pipeline.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.30")))
+    pipeline.add_argument("--out", type=Path, default=Path("out/tech_rag/pipeline.json"))
     evaluation = commands.add_parser("evaluate", help="정답셋으로 Hit Rate@K·MRR 측정 (OpenAI 호출 없음)")
     evaluation.add_argument("--index", type=Path, default=Path("out/tech_rag/index"))
     evaluation.add_argument("--eval", type=Path, default=Path("data/retrieval_eval.json"))

@@ -441,3 +441,18 @@ def test_collection_removes_documents_dropped_from_manifest(tmp_path):
     assert result["total_pages"] == 2
     assert {r["document_id"]: r["status"] for r in result["records"]} == {"drop": "REMOVED", "keep": "CACHED"}
     assert [d.document_id for d in load_corpus(directory / "corpus.json").documents] == ["keep"]
+
+
+def test_pipeline_runs_graph_and_reports_each_agent(index):
+    from investment_scout.rag.pipeline import run_pipeline
+
+    lines = []
+    # 후보 기업 자료가 없는 테스트 인덱스: 검색 결과가 없으므로 OpenAI 호출 없이 '근거 부족'.
+    final = run_pipeline(index, max_candidates=2, min_score=0.3,
+                         echo=lambda line, **kwargs: lines.append(line))
+    text = "\n".join(lines)
+    assert "🔍 스타트업 탐색: 적격 후보 20개" in text
+    assert "▶ [1/2] Mobilint" in text and "▶ [2/2] HyperAccel" in text
+    assert text.count("🔬 기술 분류: 근거 부족") == 2
+    assert final["evaluated_startups"] == ["Mobilint", "HyperAccel"]
+    assert final["termination_reason"] == "LIMIT_REACHED"

@@ -104,6 +104,17 @@ uv run python -m investment_scout.rag.cli package
 uv run pytest -q
 ```
 
+### 역할 2까지 한 번에 실행 (노드별 경과 확인)
+
+```bash
+uv run python -m investment_scout.rag.cli collect      # 자료 수집 (이미 받은 PDF는 재사용)
+uv run python -m investment_scout.rag.cli index        # KURE·Jina 인덱스 생성
+uv run python -m investment_scout.rag.cli evaluate     # 검색 품질 Hit Rate@K·MRR
+uv run python -m investment_scout.rag.cli pipeline     # 탐색→기술 요약→기술 분류 그래프 실행
+```
+
+`pipeline`은 설계서 그래프를 실제 탐색·기술 요약·기술 분류 에이전트로 실행하고, 노드가 끝날 때마다 후보 수, 주장 수, 기술 분야, 인용 URL·페이지를 출력합니다. `--max-candidates 3`으로 앞의 3개 기업만 실행할 수 있습니다. 시장성·경쟁사·투자 판단·보고서는 역할 3·4 구현 전까지 자리 표시 노드라 `INSUFFICIENT_DATA`·`HOLD`로 표시됩니다. 최종 State는 `out/tech_rag/pipeline.json`에 저장됩니다.
+
 `verify`는 6개 질문의 검색 결과를 만들지만, 본문이 질문의 답을 실제로 뒷받침하는지는 사람이 확인해야 합니다. `analyze`는 20개 기업의 `tech_summary`·`tech_category`를 `out/tech_rag/analyze.json`에 저장합니다. 역할 3에 넘길 인용 근거와 원본 PDF는 `out/tech_rag/tech_handoff.zip`에 묶입니다. 상세 검증 방법은 [기술 RAG 실행 안내](docs/tech_rag.md)를 참고하세요.
 
 `out/`과 `.env`는 Git에서 제외됩니다. 새 환경에서 다시 수집하면 웹 자료나 OpenAI 응답이 달라질 수 있으므로 결과 파일이 완전히 같다고 보장할 수 없습니다. 같은 PDF 페이지를 기준으로 검토하려면 생성한 자료 ZIP을 별도로 전달해야 합니다.
