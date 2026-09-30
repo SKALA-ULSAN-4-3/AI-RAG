@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "description": "시장 검색 정답셋: company는 세부 시장. answer_contains 구절이 있는 페이지를 정답으로 판정.",
+  "items": [
+    {"company": "AI_CHIP", "question": "엣지 AI 시장 규모와 2030년 전망은?", "answer_contains": ["$56.8 billion by the end of 2030"]},
+    {"company": "AI_CHIP", "question": "What drives edge AI market growth?", "answer_contains": ["Demand for Real-Time Data Transmission"]},
+    {"company": "AI_CHIP", "question": "엣지 AI 하드웨어 시장의 연평균 성장률은?", "answer_contains": ["CAGR of 23.98%"]},
+    {"company": "AI_CHIP", "question": "Which segment dominated the edge AI market in 2024?", "answer_contains": ["the hardware segment dominated"]},
+    {"company": "DATACENTER_AI", "question": "데이터센터 가속기 시장의 2030년 규모는?", "answer_contains": ["USD 372.68 billion by 2030", "USD 372.68 Billion by 2030"]},
+    {"company": "DATACENTER_AI", "question": "Which region is the largest for data center accelerators?", "answer_contains": ["Largest region: North America"]},
+    {"company": "DATACENTER_AI", "question": "주요 데이터센터 가속기 업체는 어디인가?", "answer_contains": ["Achronix Semiconductor Corporation"]},
+    {"company": "CXL_MEMORY", "question": "CXL 메모리 어플라이언스 시장의 2029년 규모는?", "answer_contains": ["growing to $5.32 billion by 2029"]},
+    {"company": "CXL_MEMORY", "question": "What factors drive CXL memory appliance market growth?", "answer_contains": ["memory pooling and resource sharing"]},
+    {"company": "SILICON_PHOTONICS", "question": "실리콘 포토닉스 시장 규모 전망은?", "answer_contains": ["USD 9.6 billion by 2030"]},
+    {"company": "SILICON_PHOTONICS", "question": "What restrains large-scale adoption of silicon photonics?", "answer_contains": ["high cost of manufacturing and infrastructure"]},
+    {"company": "SILICON_PHOTONICS", "question": "광 트랜시버 속도 기술 동향은?", "answer_contains": ["400G, 800G, and emerging 1.6T"]},
+    {"company": "IN_MEMORY_COMPUTE", "question": "What drives the in-memory computing chip market?", "answer_contains": ["exponential increase in data generation"]},
+    {"company": "IN_MEMORY_COMPUTE", "question": "인메모리 컴퓨팅 칩 시장은 어떤 제품 유형으로 구분되나?", "answer_contains": ["DRAM-based, SRAM-based, MRAM-based"]},
+    {"company": "CHIPLET", "question": "다이 투 다이 IP 시장의 2033년 전망은?", "answer_contains": ["USD 3.72 Billion by 2033"]},
+    {"company": "CHIPLET", "question": "Who are the leading die-to-die IP vendors?", "answer_contains": ["Synopsys Cadence Design Systems"]}
+  ]
+}
