@@ -30,6 +30,28 @@ def _claims(summary: dict, keys: tuple[str, ...], limit: int = 2) -> list[str]:
     return lines
 
 
+def _reason(text: str, limit: int = 70) -> str:
+    text = text.replace("[코드 규칙: 인용 근거에 필요한 정보가 없어 ", "(필요 정보 없음 → ").replace(" 상한 적용]", " 상한)")
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def score_lines(details: dict) -> list[str]:
+    """점수표: 설계서 항목별 소계, 체크리스트 점수와 한 줄 이유, 리스크 감점."""
+    lines = []
+    for key, label, weight, _ in SCORECARD:
+        lines.append(f"      ■ {label} {details['groups'][key]}/{weight}")
+        for item in (i for i in details["items"] if i["group"] == key):
+            lines.append(f"        - {item['question']} {item['score']}/{item['max_points']}: {_reason(item['rationale'])}")
+    penalized = details.get("penalized_risk_types", [])
+    lines.append(f"      ■ 리스크 감점 {details['risk_penalty']}점 (치명 리스크 유형: {', '.join(penalized) or '없음'})")
+    for risk in details["risks"]:
+        mark = "치명" if risk["fatal"] else "참고"
+        lines.append(f"        - [{risk['type']}·{mark}] {_reason(risk['description'])}")
+    subtotal = sum(details["groups"].values())
+    lines.append(f"      = 항목 합계 {subtotal} + 리스크 {details['risk_penalty']} = 총점 {details['total']}점")
+    return lines
+
+
 def describe(node: str, update: dict, state: dict) -> list[str]:
     """노드 출력 요약: 각 에이전트가 무엇을 채웠는지 한눈에 확인."""
     if node == "scout_candidates":
@@ -64,12 +86,8 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
         details = update.get("evaluation_details") or {}
         if not details:
             return [f"  🧮 투자 판단: {update['investment_decision']} {PLACEHOLDER}"]
-        groups = " / ".join(f"{label.split(' ')[0]} {details['groups'][key]}/{weight}"
-                            for key, label, weight, _ in SCORECARD)
-        fatal = sum(r["fatal"] for r in details["risks"])
-        return [f"  🧮 투자 판단: {details['decision']} — 총점 {details['total']}/100 "
-                f"(기준 {details['threshold']}, 치명 리스크 {fatal}건 {details['risk_penalty']}점)",
-                f"      {groups}"]
+        return [f"  🧮 투자 판단: {details['decision']} — 총점 {details['total']}/100 (추천 기준 {details['threshold']}점)",
+                *score_lines(details)]
     if node == "record_evaluation":
         record = update["evaluation_history"][-1]
         lines = [f"  💾 평가 저장: 최종 {record['investment_decision']}, 누적 {len(update['evaluated_startups'])}개"]

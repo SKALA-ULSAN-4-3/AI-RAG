@@ -68,6 +68,15 @@ def test_code_caps_scores_and_zeroes_items_without_evidence():
     assert details["total"] == 10
 
 
+def test_risk_penalty_is_ten_per_risk_type():
+    risks = [Risk(type="기술", description="수율", fatal=True, evidence_ids=["tech_summary:tech_001"]),
+             Risk(type="기술", description="발열", fatal=True, evidence_ids=["tech_summary:tech_001"]),
+             Risk(type="법률", description="특허 분쟁", fatal=True, evidence_ids=["tech_summary:tech_001"])]
+    details = score_judgement(judgement(full_marks(), risks), BUNDLE)
+    assert details["penalized_risk_types"] == ["기술", "법률"]
+    assert details["risk_penalty"] == -20 and details["total"] == 80
+
+
 def test_fatal_risk_deducts_ten_and_unsupported_risk_is_ignored():
     risks = [Risk(type="법률", description="특허 분쟁", fatal=True, evidence_ids=["tech_summary:tech_001"]),
              Risk(type="운영", description="공급망", fatal=False, evidence_ids=["tech_summary:tech_001"]),

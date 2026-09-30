@@ -36,7 +36,7 @@ uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 | 경쟁 우위 | 20 | 차별성 (5), 진입장벽 (10), 시장 선점 우위 (5) |
 | 성장가능성 | 15 | Scale-up 구조 (8), 10년 후 경쟁력 (7) |
 | 투자조건 | 10 | 팀 신뢰 (5), 투자 조건·Valuation (5) |
-| 리스크 | – | 기술·운영·법률 치명 리스크당 −10 |
+| 리스크 | – | 기술·운영·법률 유형별로 치명 리스크가 있으면 각 −10 (최대 −30) |
 
 체크리스트 문구와 배점은 `SCORECARD` 상수에 설계서 원문 그대로 있고, `tests/test_role3.py::test_scorecard_matches_design_document`가 설계서 표와 일치하는지 검사합니다.
 
@@ -47,14 +47,16 @@ uv run python -m investment_scout.rag.cli pipeline --max-candidates 3
 - **필수 정보 규칙(코드)**: 인용 근거에 팀 경력 정보가 없으면 팀 0점, 밸류에이션 정보가 없으면 투자 조건 최대 2점, 고객·공급·매출 정보가 없으면 초기 고객 반응 최대 2점. 설립 연도로 팀 신뢰를, 투자 단계로 밸류에이션 적정성을 추정하지 않기 위한 규칙입니다.
 - **재현성**: 같은 입력도 LLM 채점이 흔들려(측정 시 최대 12점) 3회 채점 후 항목별 중앙값을 씁니다. 반복 실행에서 판정이 같게 유지되는 것을 확인했습니다.
 
-판정: `총점 = 분야 합계 − 10 × 치명 리스크 수`, 총점 70점 이상이면 `RECOMMENDED`, 아니면 `HOLD`. **70점은 설계서에 없어 실습 계획서 예시를 적용한 값이며 팀 확정이 필요합니다.** 추천이더라도 `record_evaluation`이 평가 필수 정보(기술 `core_technology`·`differentiation`, 시장 `market_size`·`growth_rate`, 경쟁 `main_competitors`) 부족을 발견하면 HOLD로 바꿉니다.
+판정: `총점 = 분야 합계(최대 100) − 10 × 치명 리스크가 있는 유형 수`(같은 유형 여러 건은 한 번만 감점), 총점 70점 이상이면 `RECOMMENDED`, 아니면 `HOLD`. **70점은 설계서에 없어 실습 계획서 예시를 적용한 값이며 팀 확정이 필요합니다.** 추천이더라도 `record_evaluation`이 평가 필수 정보(기술 `core_technology`·`differentiation`, 시장 `market_size`·`growth_rate`, 경쟁 `main_competitors`) 부족을 발견하면 HOLD로 바꿉니다.
 
 ## 역할 4 전달 항목
 
 `evaluation_history[]`의 각 기록에 들어 있습니다.
 
 - `evaluation_scores`: 분야 점수, `분야.항목` 점수, `risk_penalty`, `total`
-- `evaluation_details`: 항목별 질문·배점·점수·근거 문장·근거 ID, 리스크, 기준선, 3회 채점 점수
+- `evaluation_details`: 항목별 질문·배점·점수·한 줄 이유·근거 ID, 리스크(치명/참고), 감점 유형, 기준선, 3회 채점 점수
+
+`pipeline` 실행 시 기업마다 분야 소계, 체크리스트 항목별 점수와 한 줄 이유, 리스크 감점, 총점 계산식을 출력합니다.
 - `market_analysis`·`competitor_analysis`: 검증된 주장과 인용(URL·페이지·원문)
 - `hold_reason`: 총점 미달·치명 리스크·미흡 항목 또는 핵심 정보 부족 사유
 - `source_evidence[기업명]`: 인용한 출처 전체 (`publisher`, `accessed_at`, `published_at` 포함 → REFERENCE 작성용)

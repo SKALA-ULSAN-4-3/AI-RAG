@@ -41,7 +41,7 @@ SCORECARD = [
     ]),
 ]
 RISK_TYPES = ("기술", "운영", "법률")
-RISK_PENALTY = 10          # 설계서: 치명적 리스크당 -10점
+RISK_PENALTY = 10          # 설계서·팀 확정: 기술·운영·법률 유형별 치명 리스크가 있으면 각 -10점 (최대 -30)
 RECOMMEND_THRESHOLD = 70   # 설계서에 없음: 실습 계획서 예시 "총점 70점 이상" 적용 (팀 확정 필요)
 
 # 채점 참고 근거: 설계서 질문·배점은 그대로 두고, 각 항목에 연결할 근거 종류만 안내.
@@ -122,7 +122,8 @@ class Judgement(BaseModel):
 
 INSTRUCTIONS = (
     "AI 반도체 스타트업 투자 심사역이다. 제공한 evidence만 근거로 checklist 각 항목을 0~max_points 정수로 "
-    "채점하고 rationale을 한국어로 쓴다. evidence_ids에는 채점 근거가 된 evidence의 id만 넣는다. "
+    "채점하고 rationale을 한국어 한 문장(60자 이내)으로, 왜 그 점수인지 근거 내용을 들어 쓴다. "
+    "evidence_ids에는 채점 근거가 된 evidence의 id만 넣는다. "
     "근거가 없으면 score 0, evidence_ids 빈 목록, rationale에 '근거 부족'이라고 쓴다. "
     "채점 기준: 근거가 구체적이고 독립적(제3자 보도·고객·수치)이면 만점에 가깝게, 자사 홍보성 주장뿐이면 "
     "최대 절반, 간접 근거면 그 이하. 시장 수치는 세부 시장 규모이지 기업 매출이 아니다. "
@@ -188,11 +189,17 @@ def score_judgement(judgement: Judgement, bundle: list[dict], *,
             risks.append({"type": risk.type, "description": risk.description,
                           "fatal": risk.fatal, "evidence_ids": evidence})
     groups = {group: sum(i["score"] for i in items if i["group"] == group) for group, *_ in SCORECARD}
-    penalty = -RISK_PENALTY * sum(risk["fatal"] for risk in risks)
+    penalized = risk_types_penalized(risks)
+    penalty = -RISK_PENALTY * len(penalized)
     total = sum(groups.values()) + penalty
     decision = DECISION_RECOMMENDED if total >= threshold else DECISION_HOLD
-    return {"items": items, "groups": groups, "risks": risks, "risk_penalty": penalty,
-            "total": total, "threshold": threshold, "decision": decision}
+    return {"items": items, "groups": groups, "risks": risks, "penalized_risk_types": penalized,
+            "risk_penalty": penalty, "total": total, "threshold": threshold, "decision": decision}
+
+
+def risk_types_penalized(risks: list[dict]) -> list[str]:
+    """감점 대상 유형: 치명 리스크가 있는 기술·운영·법률 유형 (같은 유형 여러 건은 한 번만)."""
+    return [kind for kind in RISK_TYPES if any(r["fatal"] and r["type"] == kind for r in risks)]
 
 
 def median_details(runs: list[dict], *, threshold: int = RECOMMEND_THRESHOLD) -> dict:
@@ -203,12 +210,14 @@ def median_details(runs: list[dict], *, threshold: int = RECOMMEND_THRESHOLD) ->
         chosen = median_low(scores)
         source = next(run["items"][position] for run in runs if run["items"][position]["score"] == chosen)
         items.append({**source, "samples": scores})
-    fatal_counts = [sum(r["fatal"] for r in run["risks"]) for run in runs]
+    fatal_counts = [len(risk_types_penalized(run["risks"])) for run in runs]
     risks = next(run["risks"] for run, count in zip(runs, fatal_counts) if count == median_low(fatal_counts))
     groups = {group: sum(i["score"] for i in items if i["group"] == group) for group, *_ in SCORECARD}
-    penalty = -RISK_PENALTY * sum(risk["fatal"] for risk in risks)
+    penalized = risk_types_penalized(risks)
+    penalty = -RISK_PENALTY * len(penalized)
     total = sum(groups.values()) + penalty
-    return {"items": items, "groups": groups, "risks": risks, "risk_penalty": penalty, "total": total,
+    return {"items": items, "groups": groups, "risks": risks, "penalized_risk_types": penalized,
+            "risk_penalty": penalty, "total": total,
             "threshold": threshold, "samples": len(runs), "sample_totals": [run["total"] for run in runs],
             "decision": DECISION_RECOMMENDED if total >= threshold else DECISION_HOLD}
 
@@ -218,10 +227,11 @@ def hold_reason_for(details: dict) -> str | None:
         return None
     weak = [f"{i['question']} ({i['score']}/{i['max_points']})" for i in details["items"]
             if i["score"] < i["max_points"] / 2]
-    fatal = [r["description"] for r in details["risks"] if r["fatal"]]
+    fatal = [f"[{r['type']}] {r['description']}" for r in details["risks"] if r["fatal"]]
     parts = [f"총점 {details['total']}점 < 추천 기준 {details['threshold']}점"]
     if fatal:
-        parts.append(f"치명 리스크 {len(fatal)}건(−{RISK_PENALTY * len(fatal)}점): {'; '.join(fatal)}")
+        parts.append(f"치명 리스크 {', '.join(details['penalized_risk_types'])} "
+                     f"({details['risk_penalty']}점): {'; '.join(fatal)}")
     if weak:
         parts.append(f"미흡 항목: {'; '.join(weak)}")
     return ". ".join(parts)
