@@ -28,7 +28,7 @@
 
 - Framework: LangGraph
 - LLM/Generator: OpenAI `gpt-4o-mini` (기술 요약·분류)
-- LLM/Judge: 담당 범위 밖, 모델 미확정
+- LLM/Judge: OpenAI `gpt-4o-mini` (투자 판단 채점, 3회 채점 중앙값, `OPENAI_JUDGE_MODEL`로 변경 가능)
 - Retrieval: FAISS (IndexFlatIP) - Hit Rate@3 0.978, MRR@10 0.923 (46문항, 하이브리드)
 - Embedding: `nlpai-lab/KURE-v1`, `jinaai/jina-embeddings-v5-text-small`
 - PDF/Web: pypdf, Playwright
@@ -37,6 +37,11 @@
 
 - 기술 요약 에이전트: 검색 근거에 따라 기술 장점·한계·상용화 상태를 `tech_summary`로 반환
 - 기술 분류 에이전트: NPU, AI Accelerator, HBM, EDA/공정 AI 등 기술 분야를 `tech_category`로 반환
+- 시장성 평가 에이전트 (RAG): 세부 시장 보고서 근거로 시장 규모·성장률·수요를 `market_analysis`로 반환
+- 경쟁사 비교 에이전트: 웹 검색 근거로 경쟁사·비교·진입장벽을 `competitor_analysis`로 반환
+- 투자 판단 에이전트: 설계서 Score Table·체크리스트(100점)로 채점, 치명 리스크당 −10점, 70점 이상 `RECOMMENDED`
+
+역할 3의 기준·실행 방법은 [역할 3 안내](docs/role3.md)를 참고하세요.
 
 ## Architecture
 
