@@ -10,11 +10,11 @@
 
 ## Progress
 
-- 20개 기업의 공식 자료 URL 28개를 등록하고, 웹 문서를 PDF로 저장해 전체 **181/200페이지**를 수집했습니다.
-- 19개 기업의 텍스트를 검색할 수 있으며, 1개 기업은 사이트 인증서 문제로 수집 자료가 부족합니다. 이미지로만 구성된 특허 PDF 1건은 텍스트 검색에서 제외됩니다.
-- 329개 청크로 FAISS 인덱스를 만들었습니다. 기술 분석 결과(gpt-4o-mini)는 근거가 확인된 주장 64개와 인용 67개를 포함하며, 기술 분야는 18개 기업에서 분류되고 2개 기업은 `근거 부족`으로 처리됩니다. LLM 응답에 따라 재실행 시 수치가 달라질 수 있습니다.
-- 기술 질문 6개로 검색 결과의 URL·실제 PDF 페이지를 확인했습니다. 검색 품질의 Hit Rate@K와 MRR, 검색 결과의 의미적 적합성은 아직 측정·검토되지 않았습니다.
-- 관련 테스트 140개가 통과했습니다. 수집 자료와 분석 결과는 로컬 `out/`에 있으며 GitHub에는 포함되지 않습니다.
+- 20개 기업의 자료 URL 30개를 등록하고, 웹 문서를 PDF로 저장해 전체 **179/200페이지**를 수집했습니다. 본문 텍스트가 없는 PDF 2건(18페이지)은 목록에서 빼고, 자료가 부족했던 Semunite·Pebble Square·XCENA·BOS의 기사·보도자료를 추가했습니다.
+- 20개 기업 모두 검색 가능한 본문이 있습니다. 공식 사이트가 차단(HTTP 403)되거나 인증서 오류인 URL 6건은 수집 실패로 기록됩니다.
+- 361개 청크로 FAISS 인덱스를 만들었습니다. 기술 분석 결과(gpt-4o-mini, temperature 0)는 근거가 확인된 주장 78개와 인용 79개를 포함하며, 기술 분야는 18개 기업에서 분류되고 2개 기업(iHW, Oxmiq Labs)은 `근거 부족`으로 처리됩니다. temperature 0에서도 재실행 시 1~2개 기업의 분류가 달라질 수 있습니다.
+- 20개 기업 46문항 정답셋(`data/retrieval_eval.json`)으로 검색 품질을 측정했습니다. 하이브리드 검색은 **Hit@1 0.870, Hit@3 0.978, MRR@10 0.923**으로 KURE 단독(MRR 0.862)·Jina 단독(0.888)보다 높습니다. 무작위 순위의 MRR은 약 0.39입니다.
+- 관련 테스트 144개가 통과했습니다. 수집 자료와 분석 결과는 로컬 `out/`에 있으며 GitHub에는 포함되지 않습니다.
 
 ## Features
 
@@ -29,7 +29,7 @@
 - Framework: LangGraph
 - LLM/Generator: OpenAI `gpt-4o-mini` (기술 요약·분류)
 - LLM/Judge: 담당 범위 밖, 모델 미확정
-- Retrieval: FAISS (Hit Rate@K, MRR 미측정)
+- Retrieval: FAISS (IndexFlatIP) - Hit Rate@3 0.978, MRR@10 0.923 (46문항, 하이브리드)
 - Embedding: `nlpai-lab/KURE-v1`, `jinaai/jina-embeddings-v5-text-small`
 - PDF/Web: pypdf, Playwright
 
@@ -98,6 +98,7 @@ uv run python -m investment_scout.rag.cli doctor
 uv run python -m investment_scout.rag.cli collect
 uv run python -m investment_scout.rag.cli index
 uv run python -m investment_scout.rag.cli verify --company HyperAccel
+uv run python -m investment_scout.rag.cli evaluate
 uv run python -m investment_scout.rag.cli analyze
 uv run python -m investment_scout.rag.cli package
 uv run pytest -q

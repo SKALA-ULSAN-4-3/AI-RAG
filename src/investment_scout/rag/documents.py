@@ -92,3 +92,7 @@ class DocumentCorpus:
                 f"전체 자료 {proposed_total}페이지: {MAX_CORPUS_PAGES}페이지 한도 초과"
             )
         self._documents[document.document_id] = document
+
+    def remove(self, document_id: str) -> Document:
+        """목록에서 제외된 자료 삭제: 페이지 한도 계산에서도 빠짐."""
+        return self._documents.pop(document_id)

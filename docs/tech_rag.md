@@ -131,8 +131,8 @@ python -m investment_scout.rag.cli seed --manifest out/new_sources.json
 
 ## 3. KURE/Jina 인덱스 생성
 
-현재 수집 결과(2026-09-30): 20개 기업에 대해 총 181페이지를 등록했고, 19개 기업에서 검색 가능한 본문을 확보했습니다. HyperAccel·Panmnesia의 논문, Articron에 관한 연세대 보도자료, iHW에 관한 Microchip 보도자료, Mobilint ARIES 제품 문서와 특허 PDF가 포함됩니다. Mobilint 특허 PDF는 11페이지 모두 추출 가능한 텍스트가 없어 검색 인덱스에 들어가지 않습니다. Semunite의 공식 사이트는 인증서 검증 오류로 수집되지 않았습니다. `collect`가 종료 코드 1을 반환하는 것은 이 실패를 숨기지 않기 위한 동작입니다. 실제 상태는 `out/tech_rag/documents/coverage.json`과 `collection_log.json`에서 확인하세요.
-현재 분석(gpt-4o-mini)은 20개 기업을 모두 처리했고, 인용 검증을 통과한 주장 64건(인용 67건)을 생성했습니다. 기술 분야는 18개 기업에서 확인됐고 2개 기업(Articron, Semunite)은 `근거 부족`입니다. Pebble Square의 `OTHER`는 슬로건 한 줄에 근거하므로 사람의 확인이 필요합니다. 일부 항목이 빠지면 결과 상태가 `INSUFFICIENT_DATA`로 표시됩니다. 이 수치는 문서 추가와 재실행에 따라 달라집니다.
+현재 수집 결과(2026-09-30): 20개 기업에 대해 총 179페이지를 등록했고, 20개 기업 모두 검색 가능한 본문을 확보했습니다. HyperAccel·Panmnesia의 논문, Articron에 관한 연세대 보도자료, iHW에 관한 Microchip 보도자료, Mobilint ARIES 제품 문서, Semunite 기사(한국신용신문), Pebble Square 일본 법인 설립 소개(JETRO), XCENA·BOS 보도자료가 포함됩니다. 본문 텍스트가 없던 Articron 홈페이지 스냅샷과 Mobilint 특허 PDF(합계 18페이지)는 목록에서 뺐습니다. 목록에서 뺀 자료는 다음 `collect` 때 자료집과 페이지 합계에서 제거되고 `REMOVED`로 기록됩니다. HTTP 403·인증서 오류로 실패하는 URL 6건 때문에 `collect`가 종료 코드 1을 반환하며, 이는 실패를 숨기지 않기 위한 동작입니다. 실제 상태는 `out/tech_rag/documents/coverage.json`과 `collection_log.json`에서 확인하세요.
+현재 분석(gpt-4o-mini, temperature 0)은 20개 기업을 모두 처리했고, 인용 검증을 통과한 주장 78건(인용 79건)을 생성했습니다. 기술 분야는 18개 기업에서 확인됐고 2개 기업(iHW, Oxmiq Labs)은 `근거 부족`입니다. temperature 0에서도 OpenAI 응답이 완전히 같지는 않아, 두 번 실행 시 20개 중 18개 기업의 분류가 일치했습니다. 일부 항목이 빠지면 결과 상태가 `INSUFFICIENT_DATA`로 표시됩니다. 이 수치는 문서 추가와 재실행에 따라 달라집니다.
 
 ~~~bash
 python -m investment_scout.rag.cli index
@@ -179,6 +179,22 @@ verify.json에는 핵심 기술, 성능, 장점, 한계, 상용화, 분류에 �
 
 검색 성공 자체가 의미적 정답은 아닙니다.
 semantic_review: PENDING과 REVIEW_REQUIRED는 사람이 확인해야 한다는 표시입니다.
+
+## 4-1. 검색 품질 평가 (Hit Rate@K, MRR) — OpenAI 호출 없음
+
+~~~bash
+python -m investment_scout.rag.cli evaluate
+~~~
+
+`data/retrieval_eval.json`의 46문항(20개 기업, 한국어·영어 혼합)으로 측정합니다. 각 문항의 정답은 `answer_contains` 구절이 들어 있는 페이지입니다. 페이지 번호를 직접 적지 않아 자료를 다시 수집해도 정답이 유지되며, 구절을 자료에서 찾지 못하면 평가를 중단합니다. 순위는 임계값 없이 해당 기업 청크 전체에서 매기고, 상위 10개 안에서 정답 페이지의 첫 순위로 계산합니다.
+
+| 방식 | Hit@1 | Hit@3 | Hit@5 | MRR@10 |
+| --- | --- | --- | --- | --- |
+| 하이브리드 (질문 언어별 0.7/0.3) | 0.870 | 0.978 | 0.978 | 0.923 |
+| KURE 단독 | 0.783 | 0.935 | 0.978 | 0.862 |
+| Jina 단독 | 0.804 | 0.978 | 0.978 | 0.888 |
+
+무작위 순위의 MRR@10은 약 0.39입니다. 청크가 20개 이상인 4개 기업(Axelera AI, HyperAccel, Mobilint, Panmnesia)만 보면 하이브리드 0.955, KURE 0.848, Jina 0.864, 무작위 0.236입니다. 정답셋은 사실 확인형 질문이므로, 요약형 질문의 검색 품질은 `verify` 결과를 사람이 확인해 보완합니다. 결과는 `out/tech_rag/evaluate.json`에 문항별 순위와 함께 저장됩니다.
 
 ## 5. 기술 답변·전체 기업 분석 — OpenAI 호출 발생
 

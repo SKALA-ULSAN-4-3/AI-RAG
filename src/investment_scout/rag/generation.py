@@ -67,7 +67,8 @@ class OpenAIGenerator:
                 model=model, instructions=instructions,
                 input=json.dumps({"company": company, "question": question,
                                   "allowed_fields": fields, "context": context}, ensure_ascii=False),
-                text_format=GroundedResponse, store=False,
+                # 재현성: 같은 근거에 같은 답이 나오도록 샘플링 무작위성 제거.
+                text_format=GroundedResponse, store=False, temperature=0,
             )
         if response.output_parsed is None:
             raise ValueError("구조화 응답이 없습니다. 모델 거절 또는 응답 중단을 확인하세요.")

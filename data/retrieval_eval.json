@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "기술 검색 정답셋: answer_contains 구절이 들어 있는 페이지를 정답으로 판정 (공백·하이픈·합자 무시). Semunite(자료 없음), Pebble Square(기술 정보 없음) 제외.",
+  "description": "기술 검색 정답셋: answer_contains 구절이 들어 있는 페이지를 정답으로 판정 (공백·하이픈·합자 무시). 20개 기업 전체 포함.",
   "items": [
     {"company": "Mobilint", "question": "NPU의 최대 연산 성능은 몇 TOPS인가?", "answer_contains": ["80 TOPS"]},
     {"company": "Mobilint", "question": "ARIES is available in which form factors?", "answer_contains": ["MXM"]},
@@ -41,6 +41,12 @@
     {"company": "Articron", "question": "아티크론 PIM 기술의 전력·면적 효율 검증 결과는?", "answer_contains": ["3배 이상의 성능"]},
     {"company": "Articron", "question": "AI 기반 임베디드 메모리 회로 자동 설계 솔루션은?", "answer_contains": ["DALUS"]},
     {"company": "iHW", "question": "What power efficiency will the analog processing unit reach?", "answer_contains": ["20-80 TeraOPS per Watt"]},
-    {"company": "iHW", "question": "Microchip의 어떤 인메모리 컴퓨팅 기술을 사용하는가?", "answer_contains": ["memBrain"]}
+    {"company": "iHW", "question": "Microchip의 어떤 인메모리 컴퓨팅 기술을 사용하는가?", "answer_contains": ["memBrain"]},
+    {"company": "Semunite", "question": "세뮤나이트는 반도체 개발 과정을 어떻게 체계화했나?", "answer_contains": ["6단계 프로세스"]},
+    {"company": "Semunite", "question": "What design expertise does the Semunite team cover?", "answer_contains": ["NPU IP 설계부터 SoC 플랫폼 구축"]},
+    {"company": "Pebble Square", "question": "Pebble Square의 Analog-PIM 기술은 어떻게 동작하나?", "answer_contains": ["enables analog computation directly from flash memory"]},
+    {"company": "Pebble Square", "question": "How much funding has Pebble Square raised in Korea?", "answer_contains": ["15 billion KRW"]},
+    {"company": "XCENA", "question": "MX1은 메모리 근처 연산에 어떤 코어를 사용하나?", "answer_contains": ["thousands of in-house RISC-V cores"]},
+    {"company": "BOS Semiconductors", "question": "What units are inside each Tensix NPU core?", "answer_contains": ["array math unit for tensor operations"]}
   ]
 }

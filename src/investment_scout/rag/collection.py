@@ -102,6 +102,12 @@ def collect_manifest(manifest_path: Path, directory: Path, *, local_only: bool =
     corpus_path = directory / "corpus.json"
     corpus = load_corpus(corpus_path) if corpus_path.exists() else DocumentCorpus()
     records = []
+    # 목록 동기화: 목록에서 뺀 자료(예: 본문 없는 PDF)는 자료집과 200페이지 합계에서 제외.
+    for document in [d for d in corpus.documents if d.document_id not in set(ids)]:
+        corpus.remove(document.document_id)
+        records.append({"document_id": document.document_id, "company": document.company,
+                        "url": document.url, "status": "REMOVED", "pages": len(document.pages)})
+        print(f"{document.document_id}: REMOVED", flush=True)
 
     def collect(context=None):
         registered = {d.document_id: d for d in corpus.documents}

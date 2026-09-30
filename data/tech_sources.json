@@ -80,14 +80,6 @@
       "published_at": null
     },
     {
-      "document_id": "tech_08_homepage",
-      "company": "Articron",
-      "url": "https://articron.com",
-      "title": "Articron 공식 홈페이지",
-      "document_type": "official_website",
-      "published_at": null
-    },
-    {
       "document_id": "tech_09_homepage",
       "company": "Pebble Square",
       "url": "https://www.pebble-square.com",
@@ -240,12 +232,36 @@
       "published_at": null
     },
     {
-      "document_id": "mobilint_quantized_patent",
-      "company": "Mobilint",
-      "url": "https://patentimages.storage.googleapis.com/63/0f/41/029436d835fafb/US20250181902A1.pdf",
-      "title": "US20250181902A1: Method and apparatus for evaluating quantized artificial neural network",
-      "document_type": "patent",
-      "published_at": "2025-06-05"
+      "document_id": "semunite_creditnews",
+      "company": "Semunite",
+      "url": "https://www.creditnews.kr/news/articleView.html?idxno=31304",
+      "title": "삼성 출신 베테랑이 이끄는 세뮤나이트, 초저전력 AI 반도체",
+      "document_type": "press_release",
+      "published_at": "2026-08-27"
+    },
+    {
+      "document_id": "pebble_square_jetro",
+      "company": "Pebble Square",
+      "url": "https://www.jetro.go.jp/en/invest/newsroom/2025/158789d08ff7dd07.html",
+      "title": "Pebble Square Inc., Developer of Edge AI Semiconductors, Establishes Japanese Subsidiary in Tokyo",
+      "document_type": "press_release",
+      "published_at": "2025-10-06"
+    },
+    {
+      "document_id": "xcena_mx1_press",
+      "company": "XCENA",
+      "url": "https://www.prnewswire.com/news-releases/xcena-to-launch-mx1-computational-memory-in-october-recognized-for-innovation-at-fms-2025-302522881.html",
+      "title": "XCENA to Launch MX1 Computational Memory in October; Recognized for Innovation at FMS 2025",
+      "document_type": "press_release",
+      "published_at": "2025-08-06"
+    },
+    {
+      "document_id": "bos_eagle_n_press",
+      "company": "BOS Semiconductors",
+      "url": "https://www.prnewswire.com/news-releases/bos-and-tenstorrent-unveil-eagle-n-industrys-first-automotive-ai-accelerator-chiplet-soc-302328727.html",
+      "title": "BOS and Tenstorrent Unveil Eagle-N, Industry's First Automotive AI Accelerator Chiplet SoC",
+      "document_type": "press_release",
+      "published_at": "2024-12-12"
     }
   ]
 }

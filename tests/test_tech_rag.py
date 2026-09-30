@@ -423,3 +423,21 @@ def test_retrieval_evaluation_rejects_phrase_missing_from_corpus(index):
     with pytest.raises(ValueError, match="정답 구절"):
         evaluate(index, [{"company": "Company A", "question": QUESTIONS[0],
                           "answer_contains": ["not in any document"]}])
+
+
+def test_collection_removes_documents_dropped_from_manifest(tmp_path):
+    pdf = tmp_path / "sample.pdf"
+    make_pdf(pdf)
+    manifest = tmp_path / "sources.json"
+    source = {"company": "Company A", "url": "https://example.com/test.pdf", "title": "Test",
+              "document_type": "product", "pdf_path": "sample.pdf", "published_at": None}
+    write_json(manifest, {"schema_version": 1, "companies": ["Company A"], "documents": [
+        {**source, "document_id": "keep"}, {**source, "document_id": "drop"}]})
+    directory = tmp_path / "collected"
+    assert collect_manifest(manifest, directory, local_only=True)["total_pages"] == 4
+    write_json(manifest, {"schema_version": 1, "companies": ["Company A"],
+                          "documents": [{**source, "document_id": "keep"}]})
+    result = collect_manifest(manifest, directory, local_only=True)
+    assert result["total_pages"] == 2
+    assert {r["document_id"]: r["status"] for r in result["records"]} == {"drop": "REMOVED", "keep": "CACHED"}
+    assert [d.document_id for d in load_corpus(directory / "corpus.json").documents] == ["keep"]
