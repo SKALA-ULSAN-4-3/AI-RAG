@@ -11,7 +11,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from investment_scout.contracts import validate_node_update
-from investment_scout.rag.generation import openai_parse
+from investment_scout.rag.generation import COMPARISON_AXES, openai_parse
+
+COMPARE_TOPICS = set(COMPARISON_AXES)
 from investment_scout.state import DECISION_HOLD, DECISION_RECOMMENDED
 
 # 설계서 "투자판단 기준" 그대로: (키, 항목, 비중, [(키, 체크리스트 질문, 배점)])
@@ -52,9 +54,9 @@ EVIDENCE_HINTS = {
     "solves_problem": "customer_demand와 제품 기술(core_technology·advantages)의 연결",
     "core_technology": "core_technology·advantages·differentiation, 특허·논문",
     "revenue_model": "commercialization의 판매 형태(칩·카드·서버·IP 라이선스·SDK)와 고객",
-    "differentiation": "differentiation, competitive_comparison",
-    "entry_barrier": "entry_barriers, 특허·기술 격차·파트너십",
-    "market_leadership": "competitive_comparison, '최초·유일' 등 선점 근거, 파트너십",
+    "differentiation": "differentiation, compare_*(경쟁사와 항목별 비교)",
+    "entry_barrier": "entry_barriers, compare_patents·compare_partnerships, 특허·기술 격차·파트너십",
+    "market_leadership": "compare_*, '최초·유일' 등 선점 근거, 파트너십",
     "scalability": "growth_rate, 제품 라인업·폼팩터 확장, 고객·공급 확대",
     "long_term": "기술 로드맵, entry_barriers, 시장 성장률",
     "team": "창업자·경영진·핵심 인력의 경력(프로필·기사)",
@@ -70,9 +72,9 @@ ITEM_TOPICS = {
     "solves_problem": {"customer_demand", "core_technology", "advantages"},
     "core_technology": {"core_technology", "advantages", "differentiation", "categories"},
     "revenue_model": {"commercialization", "product"},
-    "differentiation": {"differentiation", "competitive_comparison"},
-    "entry_barrier": {"entry_barriers", "differentiation"},
-    "market_leadership": {"competitive_comparison", "differentiation", "commercialization"},
+    "differentiation": {"differentiation", *COMPARE_TOPICS},
+    "entry_barrier": {"entry_barriers", "differentiation", "compare_patents", "compare_partnerships"},
+    "market_leadership": {*COMPARE_TOPICS, "differentiation", "commercialization"},
     "scalability": {"growth_rate", "commercialization", "advantages"},
     "long_term": {"growth_rate", "entry_barriers", "core_technology"},
     "team": {"team"},
@@ -84,6 +86,9 @@ ITEM_TOPICS = {
 REQUIRED_INFO = {
     "team": (re.compile(r"CEO|CTO|founder|co-founder|대표|창업자|창업 멤버|경영진|출신|경력|박사|PhD|veteran|베테랑", re.I), 0),
     "deal_terms": (re.compile(r"valuation|밸류에이션|기업가치|pre-money|post-money|지분", re.I), 2),
+    # 진입장벽: 특허·파트너십·기술 격차·인증·최초 등 모방 난이도 근거가 없으면 절반 이하 (채점 후함 보완)
+    "entry_barrier": (re.compile(r"patent|특허|partner|파트너|협력|exclusive|독점|독자|proprietary|최초|first|"
+                                 r"인증|certif|qualified|격차|lead", re.I), 5),
     "early_traction": (re.compile(r"customer|고객|deploy|도입|공급|supply|ship|출하|양산|mass production|"
                                   r"매출|revenue|contract|계약|수주|sample|샘플|partner", re.I), 2),
 }

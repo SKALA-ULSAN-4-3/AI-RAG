@@ -33,7 +33,7 @@ DESIGN = {
     "투자조건 (Deal Terms)": (10, [("팀은 이 분야에서 믿을만한가?", 5),
                                ("투자 조건(Valuation 등)이 적정한 수준인가?", 5)]),
 }
-BUNDLE = [{"id": "tech_summary:tech_001", "text": "CEO 정한울은 삼성 출신이며 고객사에 샘플을 공급했다. 밸류에이션 공개"},
+BUNDLE = [{"id": "tech_summary:tech_001", "text": "CEO 정한울은 삼성 출신이며 고객사에 샘플을 공급했다. 밸류에이션 공개, 특허 보유"},
           {"id": "market_analysis:market_001", "text": "market size"},
           {"id": "profile:facts", "text": "{'funding_stage': 'SERIES_C'}"}]
 
@@ -173,7 +173,7 @@ class FakeSearch:
 
 
 def test_competitor_analyst_lists_competitors_from_web_evidence():
-    hit = {"url": "https://news.example.com/a", "title": "Edge NPU rivals",
+    hit = {"url": "https://news.example.com/a", "title": "Hailo rivals Mobilint",
            "snippet": "Mobilint competes with Hailo and DEEPX in edge NPUs", "published_at": None}
     generator = Quoting({"main_competitors": "Hailo"})
     state = {"current_startup": {"name": "Mobilint", "main_products": ["ARIES"]},
@@ -221,3 +221,17 @@ def test_judge_uses_median_of_repeated_scoring():
     market_size = next(i for i in details["items"] if i["key"] == "market_size")
     assert market_size["score"] == 6 and market_size["samples"] == [2, 9, 6]
     assert details["sample_totals"] == [2, 9, 6] and details["total"] == 6
+
+
+def test_competitor_names_must_appear_in_quote_and_not_be_the_company():
+    from investment_scout.agents.competitor import valid_competitors
+
+    def fact(name, quote):
+        return Fact(field="main_competitors", text=name, category=None,
+                    citations=[Citation(chunk_id="c", quote=quote)])
+    response = GroundedResponse(facts=[fact("Hailo", "Mobilint competes with Hailo in edge"),
+                                       fact("UALink", "Mobilint competes with Hailo in edge"),
+                                       fact("Mobilint", "Mobilint competes with Hailo")], missing_information=[])
+    kept, dropped = valid_competitors(response, "Mobilint")
+    assert [f.text for f in kept.facts] == ["Hailo"]
+    assert len(dropped) == 2

@@ -80,8 +80,10 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
     if node == "competitor_analysis":
         result = update[node]
         rivals = ", ".join(result["data"].get("main_competitors", [])) or "없음"
-        return [f"  🥊 경쟁사 비교: {result['status']}, 경쟁사 [{rivals}]",
-                *_claims(result, ("competitive_comparison", "entry_barriers"), limit=1)]
+        axes = result.get("comparison_axes", {})
+        covered = [label for key, label in axes.items() if result["data"].get(key)]
+        return [f"  🥊 경쟁사 비교: {result['status']}, 경쟁사 [{rivals}], 비교 항목 {covered or '없음'}",
+                *_claims(result, tuple(axes) + ("entry_barriers",), limit=2)]
     if node == "investment_decision":
         details = update.get("evaluation_details") or {}
         if not details:

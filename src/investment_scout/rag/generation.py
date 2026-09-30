@@ -15,10 +15,12 @@ Category = Literal["NPU", "AI_ACCELERATOR", "HBM", "DRAM", "GPU", "EDA_PROCESS_A
                    "IN_MEMORY_COMPUTE", "CXL", "PHOTONICS", "OTHER"]
 TECH_FIELDS = ("core_technology", "differentiation", "advantages", "limitations", "commercialization")
 MARKET_FIELDS = ("market_size", "growth_rate", "customer_demand")
-COMPETITOR_FIELDS = ("main_competitors", "competitive_comparison", "entry_barriers")
+# 실습 계획서의 경쟁사 비교 항목: 제품, 성능, 고객, 특허, 파트너십, 양산 역량
+COMPARISON_AXES = {"compare_product": "제품", "compare_performance": "성능", "compare_customers": "고객",
+                   "compare_patents": "특허", "compare_partnerships": "파트너십", "compare_production": "양산 역량"}
+COMPETITOR_FIELDS = ("main_competitors", *COMPARISON_AXES, "entry_barriers")
 # 문자열로 합쳐 전달하는 항목 (1번 계약: core_technology·differentiation은 문자열), 나머지는 목록.
-TEXT_FIELDS = {"core_technology", "differentiation", "answer", "market_size", "growth_rate",
-               "competitive_comparison"}
+TEXT_FIELDS = {"core_technology", "differentiation", "answer", "market_size", "growth_rate"}
 
 
 class Citation(BaseModel):
@@ -31,7 +33,8 @@ class Fact(BaseModel):
     model_config = ConfigDict(extra="forbid")
     field: Literal["core_technology", "differentiation", "advantages", "limitations", "commercialization",
                    "categories", "answer", "market_size", "growth_rate", "customer_demand",
-                   "main_competitors", "competitive_comparison", "entry_barriers"]
+                   "main_competitors", "compare_product", "compare_performance", "compare_customers",
+                   "compare_patents", "compare_partnerships", "compare_production", "entry_barriers"]
     text: str
     category: Category | None
     citations: list[Citation]
@@ -81,9 +84,12 @@ MARKET_INSTRUCTIONS = (
 COMPETITOR_INSTRUCTIONS = (
     "반도체 스타트업 경쟁사 비교 담당이다. context는 웹 검색 결과와 평가 대상 기업의 기술 자료다. "
     + COMMON_RULES +
-    "main_competitors는 fact 하나에 경쟁 기업 이름 하나만 text로 적고, 원문이 경쟁 관계나 같은 시장의 "
-    "경쟁 제품임을 보여야 한다. 평가 대상 기업 자신은 경쟁사가 아니다. "
-    "competitive_comparison에는 제품·성능·고객·특허·파트너십·양산 역량 중 원문으로 비교 가능한 항목만 적는다. "
+    "main_competitors는 fact 하나에 경쟁 기업 이름 하나만 text로 적고, 인용문에 그 기업 이름이 있어야 하며 "
+    "원문이 같은 시장의 경쟁 제품·기업임을 보여야 한다. 원문 근거가 있으면 2~3개를 찾는다. "
+    "평가 대상 기업 자신, 표준·규격·기술 이름(예: UALink, CXL)은 경쟁사가 아니다. "
+    "compare_product·compare_performance·compare_customers·compare_patents·compare_partnerships·"
+    "compare_production에는 해당 항목(제품, 성능, 고객, 특허, 파트너십, 양산 역량)에서 평가 대상 기업과 "
+    "특정 경쟁사를 비교하는 문장을 경쟁사 이름과 함께 적는다. 한쪽 정보만 있으면 그 사실만 적고 우열을 추정하지 않는다. "
     "entry_barriers에는 특허, 기술 격차, 파트너십, 인증 등 모방을 어렵게 하는 요소를 적는다. "
     "category는 항상 null이다."
 )
