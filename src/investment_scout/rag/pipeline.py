@@ -86,14 +86,23 @@ def describe(node: str, update: dict, state: dict) -> list[str]:
         details = update.get("evaluation_details") or {}
         if not details:
             return [f"  🧮 투자 판단: {update['investment_decision']} {PLACEHOLDER}"]
-        return [f"  🧮 투자 판단: {details['decision']} — 총점 {details['total']}/100 (추천 기준 {details['threshold']}점)",
+        verdict = "기준 통과" if details["decision"] == "RECOMMENDED" else "기준 미달"
+        return [f"  🧮 투자 판단: {verdict} — 총점 {details['total']}/100 (추천 기준 {details['threshold']}점 이상)",
                 *score_lines(details)]
     if node == "record_evaluation":
         record = update["evaluation_history"][-1]
-        lines = [f"  💾 평가 저장: 최종 {record['investment_decision']}, 누적 {len(update['evaluated_startups'])}개"]
+        verdict = "기준 통과" if record["investment_decision"] == "RECOMMENDED" else "보류"
+        lines = [f"  💾 평가 저장: {verdict}, 누적 {len(update['evaluated_startups'])}개"]
         if record["missing_core_information"]:
             fields = ", ".join(record["missing_core_information"])
-            lines.append(f"      ⚠️ 핵심 정보 부족({fields})으로 HOLD 강제 — record_evaluation 규칙")
+            lines.append(f"      ⚠️ 핵심 정보 부족({fields})으로 보류 강제 — record_evaluation 규칙")
+        if update.get("final_ranking"):
+            lines += ["", "🏆 전체 순위 (70점 이상 기준 통과 기업 중 1순위 추천)"]
+            for row in update["final_ranking"]:
+                mark = "✅ 기준 통과" if row["qualified"] else "보류"
+                lines.append(f"   {row['rank']:2}. {row['startup']:<20} {row['total']:5.1f}점  {mark}")
+            chosen = update.get("recommended_startup")
+            lines.append(f"   → 최종 추천: {chosen}" if chosen else "   → 70점 이상 기업 없음: 전원 보류")
         return lines
     if node == "generate_report":
         return ["", f"📝 보고서 생성: 종료 사유 {state.get('termination_reason')} {PLACEHOLDER}"]

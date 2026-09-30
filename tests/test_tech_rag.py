@@ -459,7 +459,8 @@ def test_pipeline_runs_graph_and_reports_each_agent(index):
     assert text.count("🔬 기술 분류: 근거 부족") == 2
     assert final["evaluated_startups"] == ["Mobilint", "HyperAccel"]
     assert final["termination_reason"] == "LIMIT_REACHED"
-    assert "🧮 투자 판단: HOLD — 총점 0/100" in text
+    assert "🧮 투자 판단: 기준 미달 — 총점 0/100" in text
+    assert "→ 70점 이상 기업 없음: 전원 보류" in text
 
 
 def test_collection_keeps_first_pages_and_respects_shared_limit(tmp_path):

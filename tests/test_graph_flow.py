@@ -30,6 +30,7 @@ def test_single_candidate_recommended_stops_after_one_record():
     assert final["evaluation_history"][0]["investment_decision"] == "RECOMMENDED"
     assert final["candidate_index"] == 1
     assert final["termination_reason"] == TERMINATION_RECOMMENDED_FOUND
+    assert final["recommended_startup"] == name
     assert final["final_report"]
 
 
@@ -45,16 +46,30 @@ def test_two_candidates_all_hold_evaluated_in_order_once_each():
     assert final["termination_reason"] == TERMINATION_ALL_HOLD
 
 
-# 3. HOLD → RECOMMENDED → 다음 후보: 세 번째 후보 미평가
-def test_hold_then_recommended_skips_remaining_candidate():
+# 3. 팀 결정: 추천 기준을 통과한 기업이 나와도 남은 후보까지 모두 평가한 뒤 1순위 추천
+def test_recommended_candidate_does_not_stop_evaluation():
     a, b, c = names_of(3)
     final = run_graph(candidates=3, decisions={b: "RECOMMENDED"})
 
-    assert final["evaluated_startups"] == [a, b]
-    assert c not in final["evaluated_startups"]
-    assert len(final["evaluation_history"]) == 2
-    assert final["candidate_index"] == 2
+    assert final["evaluated_startups"] == [a, b, c]
+    assert final["candidate_index"] == 3
+    assert final["recommended_startup"] == b
+    assert [row["startup"] for row in final["final_ranking"] if row["qualified"]] == [b]
     assert final["termination_reason"] == TERMINATION_RECOMMENDED_FOUND
+
+
+def test_ranking_picks_highest_qualified_total_and_ignores_unqualified():
+    from investment_scout.nodes.orchestration import rank_candidates
+
+    history = [
+        {"startup": "A", "investment_decision": "RECOMMENDED", "evaluation_scores": {"total": 72.0}},
+        {"startup": "B", "investment_decision": "HOLD", "evaluation_scores": {"total": 90.0}},  # 핵심 정보 부족 등
+        {"startup": "C", "investment_decision": "RECOMMENDED", "evaluation_scores": {"total": 81.0}},
+        {"startup": "D", "investment_decision": "RECOMMENDED", "evaluation_scores": {"total": 81.0}},
+    ]
+    ranking = rank_candidates(history)
+    assert [row["startup"] for row in ranking] == ["B", "C", "D", "A"]  # 동점은 먼저 평가한 기업 우선
+    assert next(row["startup"] for row in ranking if row["qualified"]) == "C"
 
 
 # 4. 빈 후보 목록: 평가 없이 보고서 생성

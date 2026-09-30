@@ -10,10 +10,11 @@
       → tech_analysis → tech_classification → market_analysis
       → competitor_analysis → investment_decision
       → record_evaluation         (결과 저장 + 인덱스 1 증가)
-      → [조건 분기]
-           RECOMMENDED            → generate_report
-           HOLD + 남은 후보 있음   → select_candidate
-           HOLD + 한도 도달        → generate_report
+      → [조건 분기]  (팀 결정: 추천 기준을 통과해도 전체 후보를 평가)
+           남은 후보 있음          → select_candidate
+           한도 도달               → generate_report
+                                     (record_evaluation 이 70점 이상 중 1순위를 recommended_startup 으로 선정,
+                                      없으면 전원 보류)
       → END
 
 종료 보장:
@@ -67,8 +68,9 @@ BUSINESS_FLOW_MERMAID = """graph TD
     C --> D[시장성 평가]
     D --> E[경쟁사 비교]
     E --> F[투자 판단]
-    F -->|투자 추천| G[보고서 생성]
-    A <-->|보류| F
+    F -->|남은 후보 있음| A
+    F -->|전체 평가 완료| H[순위 선정: 70점 이상 중 1순위 추천, 없으면 전원 보류]
+    H --> G[보고서 생성]
 """
 
 
@@ -96,18 +98,14 @@ def route_after_scout(state: InvestmentAgentState) -> str:
 
 # 평가 저장 직후 분기: 최초 RECOMMENDED 에서 종료하고, HOLD 면 한도 안에서 다음 후보로 순환합니다.
 def route_after_record(state: InvestmentAgentState) -> str:
-    """추천이 나왔거나 한도에 도달하면 'report', 남은 후보가 있으면 'next'."""
+    """한도에 도달하면 'report', 남은 후보가 있으면 'next' (추천 기준 통과 여부와 무관)."""
     decision = state.get("investment_decision")
     if decision not in VALID_DECISIONS:
         raise UnknownDecisionError(
             f"알 수 없는 investment_decision 입니다: {decision!r} (허용: {sorted(VALID_DECISIONS)})"
         )
 
-    # 최초 RECOMMENDED 에서 종료하고 이후 후보는 평가하지 않습니다.
-    if decision == DECISION_RECOMMENDED:
-        return "report"
-
-    # HOLD: 평가 한도 안에서 다음 후보로 이동합니다.
+    # 팀 결정: 70점 이상 기업 중 1순위를 고르기 위해 모든 후보를 평가합니다.
     index = state.get("candidate_index", 0)
     limit = evaluation_limit(state)
 

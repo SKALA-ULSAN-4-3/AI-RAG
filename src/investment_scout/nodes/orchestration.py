@@ -40,6 +40,8 @@ RECORD_NODE_FIELDS = (
     "termination_reason",
     *ANALYSIS_FIELDS,
     "evaluation_scores",
+    "final_ranking",
+    "recommended_startup",
 )
 
 
@@ -213,17 +215,26 @@ def record_evaluation(state: InvestmentAgentState) -> Dict[str, Any]:
     limit = evaluation_limit(state)
     total_candidates = len(state.get("candidate_startups", []))
 
-    if final_decision == DECISION_RECOMMENDED:
-        termination_reason = TERMINATION_RECOMMENDED_FOUND
-    elif next_index >= limit:
-        termination_reason = (
-            TERMINATION_LIMIT_REACHED if limit < total_candidates else TERMINATION_ALL_HOLD
-        )
+    # 팀 결정: 추천 기준을 통과해도 멈추지 않고 전체를 평가한 뒤, 통과 기업 중 총점 1순위를 추천.
+    history = [*state.get("evaluation_history", []), record]
+    ranking: List[Dict[str, Any]] = []
+    recommended = ""
+    if next_index >= limit:
+        ranking = rank_candidates(history)
+        recommended = next((row["startup"] for row in ranking if row["qualified"]), "")
+        if recommended:
+            termination_reason = TERMINATION_RECOMMENDED_FOUND
+        else:
+            termination_reason = (
+                TERMINATION_LIMIT_REACHED if limit < total_candidates else TERMINATION_ALL_HOLD
+            )
     else:
         termination_reason = ""
 
     update: Dict[str, Any] = {
-        "evaluation_history": [*state.get("evaluation_history", []), record],
+        "evaluation_history": history,
+        "final_ranking": ranking,
+        "recommended_startup": recommended,
         "evaluated_startups": [*state.get("evaluated_startups", []), name],
         "candidate_index": next_index,
         "investment_decision": final_decision,
@@ -236,6 +247,19 @@ def record_evaluation(state: InvestmentAgentState) -> Dict[str, Any]:
     return validate_node_update(
         update, allowed_fields=RECORD_NODE_FIELDS, node_name="record_evaluation"
     )
+
+
+def rank_candidates(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """총점 순위: 추천 기준 통과(최종 RECOMMENDED) 여부와 함께 정렬, 동점이면 먼저 평가한 기업 우선."""
+    rows = [
+        {"startup": record["startup"],
+         "total": float((record.get("evaluation_scores") or {}).get("total", 0.0)),
+         "qualified": record.get("investment_decision") == DECISION_RECOMMENDED,
+         "order": position}
+        for position, record in enumerate(history)
+    ]
+    rows.sort(key=lambda row: (-row["total"], row["order"]))
+    return [{**row, "rank": rank} for rank, row in enumerate(rows, start=1)]
 
 
 # 근거가 부족한 점수는 만들어내지 않는다: 타입(Dict[str, float])은 지키고 산출 불가 항목만 생략한다.

@@ -11,8 +11,9 @@ def test_documented_mermaid_matches_generated_business_flow():
     assert graph_path.read_text(encoding="utf-8") == BUSINESS_FLOW_MERMAID
     assert "A[스타트업 탐색] --> B[기술 요약]" in BUSINESS_FLOW_MERMAID
     assert "B --> C[기술 분류]" in BUSINESS_FLOW_MERMAID
-    assert "F -->|투자 추천| G[보고서 생성]" in BUSINESS_FLOW_MERMAID
-    assert "A <-->|보류| F" in BUSINESS_FLOW_MERMAID
+    assert "F -->|남은 후보 있음| A" in BUSINESS_FLOW_MERMAID
+    assert "F -->|전체 평가 완료| H[순위 선정: 70점 이상 중 1순위 추천, 없으면 전원 보류]" in BUSINESS_FLOW_MERMAID
+    assert "H --> G[보고서 생성]" in BUSINESS_FLOW_MERMAID
 
 
 def test_actual_graph_places_classification_between_summary_and_market():

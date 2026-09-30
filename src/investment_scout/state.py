@@ -87,6 +87,10 @@ class InvestmentAgentState(TypedDict):
 
     final_report: Annotated[str, "Final Report"]                                # 최종 보고서 본문
 
+    # ---- 팀 결정: 전체 평가 후 70점 이상 기업 중 1순위 추천 ----
+    final_ranking: Annotated[List[Dict[str, Any]], "Final Ranking"]             # 전체 평가 후 총점 순위 (덮어쓰기)
+    recommended_startup: Annotated[str, "Recommended Startup"]                  # 최종 추천 기업 ("" 이면 전원 보류)
+
     # ---- 요구사항으로 추가된 필드 ----
     candidate_index: Annotated[int, "Candidate Index"]                          # 다음에 평가할 후보 위치 (record 에서만 +1)
     max_candidates: Annotated[int, "Max Candidates"]                            # 이번 실행의 평가 한도
@@ -151,6 +155,8 @@ def create_initial_state(
         investment_decision="",
         hold_reason=None,
         final_report="",
+        final_ranking=[],
+        recommended_startup="",
         candidate_index=0,
         max_candidates=max_candidates,
         evaluation_history=[],

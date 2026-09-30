@@ -32,7 +32,7 @@ from investment_scout.state import (
 MOCK_HEADER = "[MOCK REPORT - 실제 보고서 아님]"
 
 TERMINATION_TEXT = {
-    TERMINATION_RECOMMENDED_FOUND: "추천 기업을 찾아 평가를 종료했습니다.",
+    TERMINATION_RECOMMENDED_FOUND: "전체 평가 후 추천 기준을 통과한 기업 중 1순위를 추천했습니다.",
     TERMINATION_ALL_HOLD: "평가한 기업이 모두 보류되어 후보를 모두 소진했습니다.",
     TERMINATION_NO_ELIGIBLE_CANDIDATES: "평가할 적격(ELIGIBLE) 후보가 없어 평가를 수행하지 않았습니다.",
     TERMINATION_ZERO_LIMIT: "max_candidates=0 이라 평가를 수행하지 않았습니다.",
