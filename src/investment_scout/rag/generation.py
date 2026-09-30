@@ -226,4 +226,15 @@ def answer_question(index, generator, *, company: str, question: str, fields=("a
         return result
     # API·설정 오류는 예외로 전달: 자료 부족이나 가짜 분석으로 위장하지 않음.
     response = generator.generate(company=company, question=question, hits=hits, fields=fields)
-    return grounded_result(response, hits, company=company, fields=fields, required=required)
+    result = grounded_result(response, hits, company=company, fields=fields, required=required)
+    missing = [field for field in (required or ()) if not result["data"].get(field)]
+    if missing:
+        # 필수 항목 재요청 1회: 누락·인용 검증 실패한 필수 항목만 다시 요청해 병합.
+        retry = generator.generate(
+            company=company, hits=hits, fields=tuple(missing),
+            question=f"{question} {', '.join(missing)}만 답하고, chunk 안의 문장을 그대로 인용하라.",
+        )
+        merged = GroundedResponse(facts=[*response.facts, *retry.facts],
+                                  missing_information=response.missing_information)
+        result = grounded_result(merged, hits, company=company, fields=fields, required=required)
+    return result

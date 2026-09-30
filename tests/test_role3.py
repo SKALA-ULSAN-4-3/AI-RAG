@@ -235,3 +235,51 @@ def test_competitor_names_must_appear_in_quote_and_not_be_the_company():
     kept, dropped = valid_competitors(response, "Mobilint")
     assert [f.text for f in kept.facts] == ["Hailo"]
     assert len(dropped) == 2
+
+
+@pytest.mark.parametrize("label,text,expected", [
+    ("PHOTONICS", "Analog-PIM(Processing-in-Memory) 기술로 AI 반도체 개발", "IN_MEMORY_COMPUTE"),
+    ("PHOTONICS", "DWDM laser source for optical interconnects", "PHOTONICS"),
+    ("CXL", "LLM inference accelerator with HBM3", "HBM"),
+    ("NPU", "AI inference processor for data centers", "AI_ACCELERATOR"),
+    ("GPU", "company history and office address", None),
+])
+def test_category_label_must_match_its_evidence(label, text, expected):
+    from investment_scout.agents.tech_classifier import checked_label
+    assert checked_label(label, text) == expected
+
+
+def test_growth_rate_is_taken_from_market_size_quote_with_cagr():
+    from investment_scout.agents.market_analyst import growth_from_size_quotes
+    quote = "projected to grow from USD 2.8 billion in 2025 to USD 9.6 billion by 2030, registering a CAGR of 28%"
+    claim = {"claim_id": "market_001", "text": "규모", "source_ids": ["m1"], "data_keys": ["market_size"],
+             "kind": "FACT", "citations": [{"quote": quote, "url": "u", "page": 1}]}
+    result = {"status": "INSUFFICIENT_DATA", "data": {"market_size": "규모"}, "claims": [claim],
+              "missing_information": ["근거 부족: growth_rate"], "errors": []}
+    fixed = growth_from_size_quotes(result)
+    assert fixed["status"] == "OK"
+    assert "CAGR of 28%" in fixed["data"]["growth_rate"]
+    assert fixed["claims"][-1]["source_ids"] == ["m1"] and fixed["missing_information"] == []
+
+
+def test_market_analyst_retries_only_missing_required_fields():
+    index = FakeIndex([chunk("m1", "AI_CHIP", "The market is projected to reach $56.8 billion by 2030"),
+                       chunk("m2", "AI_CHIP", "It grows at a compound rate of 36.9% through 2030")])
+
+    class FirstMissesGrowth:
+        def __init__(self):
+            self.fields = []
+
+        def generate(self, *, company, question, hits, fields):
+            self.fields.append(fields)
+            target = hits[0].chunk if "market_size" in fields else hits[1].chunk
+            return GroundedResponse(facts=[
+                Fact(field=f, text=f, category=None, citations=[Citation(chunk_id=target.chunk_id, quote=target.text[:30])])
+                for f in fields if f != "growth_rate" or len(self.fields) > 1
+            ], missing_information=[])
+
+    generator = FirstMissesGrowth()
+    state = {"current_startup": {"name": "A"}, "tech_category": "NPU", "source_evidence": {}}
+    result = MarketAnalyst(index, generator=generator)(state)["market_analysis"]
+    assert generator.fields[1] == ("growth_rate",)
+    assert result["status"] == "OK" and result["data"]["growth_rate"]
