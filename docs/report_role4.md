@@ -1,125 +1,46 @@
-# 역할 4 - 보고서 생성·통합 계약
+# 역할 4 — 투자 보고서 생성
 
-역할 4는 역할 3이 확정한 점수와 결정을 **표시하고 검증**하며, 점수나 투자 판단을 새로 만들지 않습니다. 출력은 Summary → 시장 → 기업/점수표 → 성장·리스크 → Reference 순서의 5페이지 PDF입니다.
+## 실행
 
-## 설치와 실행
+~~~bash
+uv run python app.py --report-only        # 저장된 최종 State로 PDF만 다시 생성 (API 호출 없음)
+uv run investment-report --input out/tech_rag/pipeline.json --out output/pdf/investment_report.pdf
+~~~
 
-```bash
-uv sync --extra report --group dev
-uv run investment-report \
-  --input out/role3/handoff.json \
-  --out output/pdf/investment_report.pdf \
-  --markdown-out output/pdf/investment_report.md
-```
+`uv run python app.py`로 전체 평가를 실행하면 그래프의 마지막 노드(`generate_report`)가 같은 PDF를 만들고, `final_report`에는 Markdown 요약을 저장합니다.
 
-레이아웃만 확인하는 합성 데이터는 다음 명령으로 실행합니다. 데모의 수치와 기업은 실제 투자 자료가 아닙니다.
+## 원칙
 
-```bash
-uv run investment-report \
-  --input data/report_demo.json \
-  --out output/pdf/role4_demo_report.pdf
-```
+- 보고서 내용은 **최종 State(에이전트 실행 결과)에서만** 가져옵니다. 예시 데이터나 고정 문구로 수치·판단을 채우지 않으며, LLM을 다시 호출하지 않습니다.
+- 사용 정보: 후보 탐색 결과(국내·해외 수), 기업별 기술·시장·경쟁 분석의 검증된 주장과 인용, 13개 체크리스트 점수·한 줄 이유·3회 채점 점수, 리스크, 전체 순위와 추천 기업, 출처 메타데이터.
+- 본문 문장 끝의 `[n]`은 5페이지 Reference 번호와 연결됩니다. 에이전트가 실제로 인용한 자료만 Reference에 넣습니다.
+- 추천 기업이 없으면(전원 보류) 최고점 후보를 대상으로 "보류" 판단 보고서를 만듭니다.
 
-한글 글꼴을 자동으로 찾지 못하면 `REPORT_FONT_PATH`에 TTF 또는 TTC 파일 경로를 지정합니다.
+## 페이지 구성 (RAG-Design 설계서 목차)
 
-## 역할 3 인계 계약
+| 페이지 | 내용 | 표·그래프 |
+| --- | --- | --- |
+| 1. Summary | 결론·평가 과정·강점·약점·리스크·시장·경쟁 한 줄 요약표와, 어떤 과정을 거쳐 어떤 결론이 나왔는지 서술한 한 문단 (**요약만, 반 페이지 이내**) | 판단 카드, 요약표 |
+| 2. 선정 시장 | 시장 규모·성장률·SAM, 대상 고객과 수요처, 관련 세부 시장 비교, 시장 해석 | 시장 규모 추이 막대그래프, 평가 기업 세부 시장 분포 |
+| 3. 선정 기업 | 기업 개요, 에이전트 평가 점수표(13개 항목·이유·출처), 팀, 기술, 아이디어 | 분야별 달성률 막대그래프 |
+| 4. 성장가능성과 리스크 | 성장 항목, 경쟁사 6개 항목 비교, 리스크(유형별 감점), 기준 통과 기업 비교, 상위 10개사 총점, 종합 의견 | 경쟁 비교표, 리스크표, 기업 비교표, 총점 막대그래프(추천 기준선) |
+| 5. Reference | 전체 평가에서 사용한 자료 출처 요약, 인용 자료 목록(기관 보고서·학술 논문·웹페이지) | 출처 요약표 |
 
-역할 3은 아래 구조를 독립 JSON으로 넘기거나 전체 State의 `role3_handoff`에 넣을 수 있습니다. 현재 역할 3 구현처럼 `evaluation_history[].evaluation_scores`, `evaluation_details`, `final_ranking`, `recommended_startup`, `source_evidence`를 담은 전체 State를 그대로 넘겨도 호환 어댑터가 처리합니다. 역할 3 Judge의 `market_analysis:claim_id` 같은 근거 ID는 실제 Reference의 `source_id`로 자동 변환됩니다.
+각 페이지는 한 쪽 틀에 맞춰 그려 **정확히 5페이지**를 보장하고, 생성 후 페이지 수를 다시 검사합니다. 1페이지 Summary는 반 페이지 높이의 틀로 제한합니다.
 
-```json
-{
-  "schema_version": 1,
-  "selected_company": {
-    "name": "기업명",
-    "founded_year": 2021,
-    "main_products": ["제품"],
-    "funding_stage": "Series B",
-    "tech_category": "AI_ACCELERATOR"
-  },
-  "evaluated_companies": [],
-  "market": {
-    "tam": "...",
-    "sam": "...",
-    "growth_rate": "...",
-    "customer_demand": "...",
-    "source_ids": ["market_001"]
-  },
-  "technology": {"summary": "...", "source_ids": ["tech_001"]},
-  "competition": {"summary": "...", "source_ids": ["comp_001"]},
-  "scorecard": {
-    "market": {"score": 20, "reason": "...", "source_ids": ["market_001"]},
-    "technology": {"score": 24, "reason": "...", "source_ids": ["tech_001"]},
-    "competitive_advantage": {"score": 15, "reason": "...", "source_ids": ["comp_001"]},
-    "growth": {"score": 11, "reason": "...", "source_ids": ["market_001"]},
-    "deal_terms": {"score": 8, "reason": "...", "source_ids": ["company_001"]}
-  },
-  "risks": [
-    {
-      "description": "치명 리스크 설명",
-      "fatal": true,
-      "penalty": -10,
-      "mitigation": "대응 방안",
-      "source_ids": ["risk_001"]
-    }
-  ],
-  "growth_outlook": [{"description": "성장 근거", "source_ids": ["market_001"]}],
-  "decision": "RECOMMENDED",
-  "decision_reason": "판단 근거",
-  "total_score": 68,
-  "summary": "반 페이지 이내 요약 원문",
-  "references": [
-    {
-      "source_id": "market_001",
-      "publisher": "발행 주체",
-      "title": "문서 제목",
-      "published_at": "2026-01-01",
-      "accessed_at": "2026-09-30",
-      "url": "https://example.com/source",
-      "page": 3
-    }
-  ]
-}
-```
+## Reference 형식 (가이드 표기법)
 
-점수 키와 최대점은 고정됩니다.
+- 기관 보고서(시장조사 보도자료): `발행기관(YYYY). 보고서명 (인용 페이지). URL`
+- 학술 논문: `저자 또는 게재처(YYYY). 논문제목. 학술지명 (인용 페이지). URL` — arXiv는 문서 번호에서 연도를 읽습니다.
+- 웹페이지: `기관명 또는 작성자(YYYY-MM-DD). 제목. 사이트명, URL` — 발행일이 없으면 접속일을 적습니다.
 
-| 키 | 표시명 | 최대점 |
-| --- | --- | ---: |
-| `market` | 시장성 | 25 |
-| `technology` | 제품/기술력 | 30 |
-| `competitive_advantage` | 경쟁 우위 | 20 |
-| `growth` | 성장가능성 | 15 |
-| `deal_terms` | 투자조건 | 10 |
+## 코드
 
-역할 4는 항목 점수 합계와 역할 3이 확정한 리스크 감점을 다시 계산해 `total_score`와 대조합니다. 현재 역할 3 State의 치명 리스크는 기술·운영·법률 유형별 최초 1건에 -10점을 적용한 결과를 그대로 변환합니다. 본문, 점수, 리스크, 성장 전망에서 참조한 `source_ids`가 `references`에 없으면 보고서 생성을 중단합니다. 반대로 참조되지 않은 출처는 Reference에 넣지 않습니다.
+| 파일 | 역할 |
+| --- | --- |
+| `reporting/content.py` | 최종 State → 요약 문장, 표·그래프 데이터, 인용 번호, Reference |
+| `reporting/pdf_report.py` | 5페이지 PDF 렌더링(ReportLab), Markdown 요약 |
+| `reporting/node.py` | LangGraph `generate_report` 노드 |
+| `reporting/cli.py` | `investment-report` 명령 |
 
-## LangGraph 연결
-
-기존 `build_graph`의 `report_node`에 역할 4 노드를 주입합니다.
-
-```python
-from investment_scout.reporting import make_report_node
-
-app = build_graph(
-    # scout/tech/category/market/competitor/decision 노드 생략
-    report_node=make_report_node("output/pdf/investment_report.pdf"),
-)
-```
-
-노드는 기존 계약에 맞춰 `{"final_report": "..."}`만 반환하고 PDF는 지정 경로에 저장합니다. 따라서 역할 3과 병합할 때 그래프 구조를 변경할 필요가 없습니다.
-
-통합 `pipeline` 명령은 기본적으로 `output/pdf/investment_report.pdf`를 생성합니다. 다른 경로는 `--report-pdf`로 지정합니다.
-
-```bash
-uv run python -m investment_scout.rag.cli pipeline \
-  --report-pdf output/pdf/investment_report.pdf
-```
-
-## 출력 검증
-
-- PDF는 정확히 5페이지가 아니면 실패합니다.
-- Summary는 700자로 제한합니다.
-- 점수표는 역할 3 점수를 그대로 표시하고 최종합만 재검산합니다.
-- Reference는 실제 사용된 `source_ids`만 포함합니다.
-- `pypdf`로 생성 후 페이지 수를 다시 확인합니다.
-- 제출 전에는 렌더링 PNG에서 글자 잘림, 표 겹침, 한글 누락을 확인합니다.
+한국어 글꼴은 macOS AppleGothic, Linux Nanum/Noto, Windows 맑은 고딕을 자동으로 찾고, 없으면 `REPORT_FONT_PATH`로 지정합니다.
