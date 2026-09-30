@@ -339,3 +339,44 @@ def test_classifier_does_not_inherit_an_uncited_second_category(index):
                              company="Company A", fields=("categories",))
     result["data"]["categories"].append("HBM")
     assert tech_classifier({"tech_summary": result}) == {"tech_category": "NPU"}
+
+
+def test_technical_sources_satisfy_team_source_contract(index):
+    from investment_scout.evidence import validate_source
+
+    hits = index.search(QUESTIONS[0], company="Company A")
+    result = grounded_result(response(hits[0].chunk, field="core_technology"), hits,
+                             company="Company A", fields=("core_technology",))
+    update = with_technical_sources(lambda state: {"source_evidence": {}}, index)({})
+    sources = [*result["evidence"], *(s for rows in update["source_evidence"].values() for s in rows)]
+    for source in sources:
+        validate_source(source)
+    assert sources[0]["publisher"] == "Company A"
+
+
+@pytest.mark.parametrize("agent", [TechAnalyst, TechClassifier])
+def test_search_question_excludes_company_name(agent):
+    # 기업명이 들어가면 저자 소개·참고문헌처럼 이름이 반복되는 청크가 상위로 올라옴.
+    assert "Mobilint" not in agent.question("Mobilint")
+
+
+@pytest.mark.parametrize("quote,ok", [
+    # 실제 분석에서 탈락했던 PDF 추출 흔적: 공백 삽입, 줄 끝 하이픈, 합자, 끝 생략·마침표
+    ("rules of memory to redefine AI inference", True),
+    ("information from an end-user perspective remains scarce.", True),
+    ("Design of CXL-integrated GPU: We propose", True),
+    ("rules of memory to redefine... end-user perspective", True),
+    ("information from an end-user perspective...", True),
+    # 내용 변경·순서 뒤바뀜·지나치게 짧은 조각은 거부
+    ("rules of memory to redefine GPU inference", False),
+    ("end-user perspective... rules of memory", False),
+    ("rules of memory... AI", False),
+])
+def test_quote_matching_tolerates_pdf_artifacts_only(index, quote, ok):
+    original = index.search(QUESTIONS[0], company="Company A")[0].chunk
+    chunk = replace(original, text=("Breaking the rules of memory t o redeﬁn e AI inference. "
+                                    "Design of CXL-integrated GPU : We propose a design. "
+                                    "Latency information from an end-\nuser perspective remains scarce."))
+    result = grounded_result(response(chunk, quote=quote), [SearchHit(chunk, 0.9, {})],
+                             company="Company A", fields=("answer",))
+    assert (result["status"] == "OK") is ok

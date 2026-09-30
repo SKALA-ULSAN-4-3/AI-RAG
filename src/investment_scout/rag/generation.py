@@ -5,6 +5,7 @@ import json
 import os
 import re
 from typing import Literal
+import unicodedata
 
 from pydantic import BaseModel, ConfigDict
 
@@ -52,6 +53,11 @@ class OpenAIGenerator:
             "출처의 성능 주장과 독립 검증 결과를 구분하고 비교 조건·단위·시점을 보존한다. "
             "장점만으로 한계를 추론하지 말고, 미기재를 단점이나 미상용화로 단정하지 않는다. "
             "분류는 실제 제품 기술만 대상으로 한다. HBM을 쓰는 NPU를 HBM 제조사로 분류하지 않는다. "
+            "라벨 정의: NPU=원문이 NPU라고 명시한 신경망 프로세서, AI_ACCELERATOR=그 밖의 AI 연산 가속 칩(LPU 등), "
+            "HBM/DRAM=해당 메모리 제품 자체, GPU=GPU 제품 또는 GPU 아키텍처, EDA_PROCESS_AI=반도체 설계 자동화·공정 AI, "
+            "IN_MEMORY_COMPUTE=PIM·CIM 등 메모리 안에서 연산, CXL=원문이 CXL을 명시한 메모리·인터커넥트 제품, "
+            "PHOTONICS=광 연결·광 연산, OTHER=칩렛·다이 간 인터커넥트 등 위에 없는 제품. "
+            "슬로건이나 막연한 'AI chip' 표현만으로는 분류하지 않는다. "
             "field=categories일 때 category에 해당 라벨을 넣고 text에는 근거 설명을 넣는다. "
             "나머지 fact의 category는 null이다. 근거 없는 항목은 facts에서 제외하고 "
             "missing_information에 '근거 부족'과 항목명을 기록한다."
@@ -68,10 +74,25 @@ class OpenAIGenerator:
         return response.output_parsed
 
 
-def _normalized(text: str) -> str:
-    # PDF 줄바꿈: 단어 중간의 하이픈만 이어 붙이고 그 외 문자는 그대로 대조.
-    joined = re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", text)
-    return re.sub(r"\s+", " ", joined).strip()
+def _loose(text: str) -> str:
+    # PDF 추출 흔적 무시: 합자(ﬁ)·공백("t o")·하이픈("end-\nuser"→"enduser")만 제거, 나머지 글자와 순서는 그대로 대조.
+    text = unicodedata.normalize("NFKC", text)
+    return re.sub(r"[\s\-\u00ad\u2010\u2011]+", "", text)
+
+
+def _quote_found(quote: str, text: str) -> bool:
+    """원문 인용 확인: '...'는 생략 표시로 보고 각 구간이 원문에 순서대로 있어야 통과."""
+    segments = [_loose(part.strip().rstrip(".,;:")) for part in re.split(r"\.{3}|…", quote)]
+    segments = [part for part in segments if part]
+    if not segments or any(len(part) < 8 for part in segments):
+        return False
+    source, position = _loose(text), 0
+    for part in segments:
+        position = source.find(part, position)
+        if position < 0:
+            return False
+        position += len(part)
+    return True
 
 
 def grounded_result(response: GroundedResponse, hits: list, *, company: str, fields: tuple) -> dict:
@@ -87,8 +108,7 @@ def grounded_result(response: GroundedResponse, hits: list, *, company: str, fie
             rejected.append("근거 부족: 빈 주장 또는 허용되지 않은 항목")
             continue
         valid = all(
-            c.chunk_id in allowed and len(_normalized(c.quote)) >= 8
-            and _normalized(c.quote) in _normalized(allowed[c.chunk_id].text)
+            c.chunk_id in allowed and _quote_found(c.quote, allowed[c.chunk_id].text)
             for c in fact.citations
         )
         if not valid or (fact.field == "categories" and fact.category is None):
@@ -122,7 +142,7 @@ def grounded_result(response: GroundedResponse, hits: list, *, company: str, fie
 
 
 def answer_question(index, generator, *, company: str, question: str, fields=("answer",),
-                    min_score: float = 0.35, top_k: int = 8) -> dict:
+                    min_score: float = 0.30, top_k: int = 8) -> dict:
     hits = index.search(question, company=company, min_score=min_score, top_k=top_k)
     if not hits:
         result = empty_analysis_result(status="INSUFFICIENT_DATA",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 from investment_scout.rag.documents import Document, DocumentType
 
@@ -25,6 +26,16 @@ class Chunk:
     pdf_path: str | None = None
     page_basis: str = "original_pdf"
     sha256: str | None = None
+    publisher: str = ""
+    accessed_at: str | None = None
+
+
+def publisher_of(document: Document) -> str:
+    """발행 주체: 기업 자체 자료는 기업명, 논문·보도자료는 게재 사이트 도메인."""
+    if document.document_type in {"official_website", "product", "patent"}:
+        return document.company
+    host = urlsplit(document.url).hostname or ""
+    return host.removeprefix("www.")
 
 
 def clean_text(text: str) -> str:
@@ -68,6 +79,8 @@ def chunk_document(
                     pdf_path=document.pdf_path,
                     page_basis=document.page_basis,
                     sha256=document.sha256,
+                    publisher=publisher_of(document),
+                    accessed_at=document.accessed_at,
                 ))
                 if end == len(text):
                     break

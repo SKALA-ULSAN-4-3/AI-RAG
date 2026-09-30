@@ -3,7 +3,14 @@
 from dataclasses import asdict, dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
+import sys
+
+# macOS OpenMP 충돌: torch·faiss가 각자 libomp를 포함해 인덱싱 중 세그폴트·abort 발생.
+# import 순서로는 해결되지 않아 libomp 로드 전 단일 스레드로 고정 (사용자 지정 값 우선).
+if sys.platform == "darwin":
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 import faiss
 import numpy as np
@@ -69,7 +76,7 @@ class DualFaissIndex:
         return cls(chunks, indexes, embedder)
 
     def search(self, query: str, *, company: str, top_k: int = 5,
-               min_score: float = 0.35) -> list[SearchHit]:
+               min_score: float = 0.30) -> list[SearchHit]:
         if not -1 <= min_score <= 1:
             raise ValueError("min_score는 -1~1 범위여야 합니다.")
         if not query.strip() or top_k <= 0:

@@ -16,14 +16,17 @@ def tech_classifier(state: dict) -> dict:
 class TechClassifier:
     """제품 분야 검색: 요약과 분리된 질문으로 분류 근거를 확보."""
 
-    def __init__(self, index, *, generator=None, min_score=0.35):
+    def __init__(self, index, *, generator=None, min_score=0.30):
         self.index = index
         self.generator = generator or OpenAIGenerator()
         self.min_score = min_score
 
     @staticmethod
     def question(company: str) -> str:
-        return f"{company}의 실제 반도체 제품 기술 분야는 NPU, AI Accelerator, HBM, DRAM, GPU, EDA/공정 AI, CXL, 광반도체 중 무엇인가?"
+        # 기업명 제외: 기술 요약 질문과 같은 이유.
+        return ("실제 반도체 제품의 기술 분야는 NPU, AI Accelerator, HBM, DRAM, GPU, EDA/공정 AI, "
+                "PIM/인메모리 연산, CXL, 광반도체, 칩렛 인터커넥트 중 무엇인가? "
+                "(product chip type, processor, memory, processing-in-memory, interconnect, photonics)")
 
     def __call__(self, state: dict) -> dict:
         company = state["current_startup"]["name"]

@@ -16,7 +16,7 @@ DEFAULT_QUESTIONS = (
     "기술의 차별점과 장점은 무엇인가?",
     "기술의 제약 조건과 한계는 무엇인가?",
     "샘플 공급, 양산 또는 고객 도입 등 상용화 상태는 무엇인가?",
-    "NPU, AI Accelerator, HBM, DRAM, GPU, EDA/공정 AI 중 어떤 제품 기술인가?",
+    "NPU, AI Accelerator, HBM, DRAM, GPU, EDA/공정 AI, PIM, CXL, 광반도체 중 어떤 제품 기술인가?",
 )
 
 
@@ -146,7 +146,7 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--corpus", type=Path, default=Path("out/tech_rag/documents/corpus.json"))
             continue
         command.add_argument("--company", required=name != "analyze")
-        command.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.35")))
+        command.add_argument("--min-score", type=float, default=float(os.getenv("RAG_MIN_SCORE", "0.30")))
         command.add_argument("--out", type=Path, default=Path(f"out/tech_rag/{name}.json"))
         if name in {"search", "ask"}:
             command.add_argument("--question", required=True)

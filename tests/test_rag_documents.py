@@ -78,3 +78,13 @@ def test_cleanup_preserves_technical_symbols_and_paragraphs():
 def test_invalid_chunk_settings_are_rejected(max_chars, overlap):
     with pytest.raises(ValueError):
         chunk_document(document(), max_chars=max_chars, overlap=overlap)
+
+
+def test_chunks_carry_publisher_and_accessed_at():
+    from dataclasses import replace
+
+    own = replace(document(), accessed_at="2026-09-30T00:00:00+00:00")
+    paper = replace(document(), document_type="paper", url="https://www.arxiv.org/pdf/1.pdf")
+    assert chunk_document(own)[0].publisher == "Company A"
+    assert chunk_document(own)[0].accessed_at == "2026-09-30T00:00:00+00:00"
+    assert chunk_document(paper)[0].publisher == "arxiv.org"

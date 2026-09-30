@@ -62,7 +62,7 @@ OPENAI_API_KEY=본인_API_키
 OPENAI_MODEL=gpt-4o-mini
 EMBEDDING_DEVICE=cpu
 EMBEDDING_BATCH_SIZE=4
-RAG_MIN_SCORE=0.35
+RAG_MIN_SCORE=0.30
 ~~~
 
 요청한 모델 ID는 gpt-4o-mini이며 Responses API의 구조화 응답을 지원합니다.
@@ -131,8 +131,8 @@ python -m investment_scout.rag.cli seed --manifest out/new_sources.json
 
 ## 3. KURE/Jina 인덱스 생성
 
-현재 수집 결과(2026-09-30): 20개 기업에 대해 총 182페이지를 등록했고, 19개 기업에서 검색 가능한 본문을 확보했습니다. HyperAccel·Panmnesia의 논문, Articron에 관한 연세대 보도자료, iHW에 관한 Microchip 보도자료, Mobilint ARIES 제품 문서와 특허 PDF가 포함됩니다. Mobilint 특허 PDF는 11페이지 모두 추출 가능한 텍스트가 없어 검색 인덱스에 들어가지 않습니다. Semunite의 공식 사이트는 인증서 검증 오류로 수집되지 않았습니다. `collect`가 종료 코드 1을 반환하는 것은 이 실패를 숨기지 않기 위한 동작입니다. 실제 상태는 `out/tech_rag/documents/coverage.json`과 `collection_log.json`에서 확인하세요.
-현재 분석은 20개 기업을 모두 처리했고, 인용 검증을 통과한 주장 45건(인용 46건)을 생성했습니다. 기술 분야는 13개 기업에서 확인됐고 7개 기업은 `근거 부족`입니다. 일부 항목이 빠지면 결과 상태가 `INSUFFICIENT_DATA`로 표시됩니다. 이 수치는 문서 추가와 재실행에 따라 달라집니다.
+현재 수집 결과(2026-09-30): 20개 기업에 대해 총 181페이지를 등록했고, 19개 기업에서 검색 가능한 본문을 확보했습니다. HyperAccel·Panmnesia의 논문, Articron에 관한 연세대 보도자료, iHW에 관한 Microchip 보도자료, Mobilint ARIES 제품 문서와 특허 PDF가 포함됩니다. Mobilint 특허 PDF는 11페이지 모두 추출 가능한 텍스트가 없어 검색 인덱스에 들어가지 않습니다. Semunite의 공식 사이트는 인증서 검증 오류로 수집되지 않았습니다. `collect`가 종료 코드 1을 반환하는 것은 이 실패를 숨기지 않기 위한 동작입니다. 실제 상태는 `out/tech_rag/documents/coverage.json`과 `collection_log.json`에서 확인하세요.
+현재 분석(gpt-4o-mini)은 20개 기업을 모두 처리했고, 인용 검증을 통과한 주장 64건(인용 67건)을 생성했습니다. 기술 분야는 18개 기업에서 확인됐고 2개 기업(Articron, Semunite)은 `근거 부족`입니다. Pebble Square의 `OTHER`는 슬로건 한 줄에 근거하므로 사람의 확인이 필요합니다. 일부 항목이 빠지면 결과 상태가 `INSUFFICIENT_DATA`로 표시됩니다. 이 수치는 문서 추가와 재실행에 따라 달라집니다.
 
 ~~~bash
 python -m investment_scout.rag.cli index
@@ -149,7 +149,8 @@ Jina는 retrieval 작업을 지정하고 query/document 프롬프트를 구분�
 - 영문·전문용어·장문 질문: KURE 0.3 + Jina 0.7.
 - 검색 대상: 요청한 기업의 청크만 사용.
 - 점수: 정규화 벡터의 cosine 점수. 검색 결과별 min-max 보정 없음.
-- 하한: RAG_MIN_SCORE=0.35는 초기 설정이며 실제 정답셋으로 보정한 값이 아닙니다.
+- 하한: RAG_MIN_SCORE=0.30. 20개 기업의 기술 질문 점수 분포(관련 청크가 0.30~0.35에 다수)를 보고 정한 값이며, 정답셋으로 보정한 값은 아닙니다.
+- 질문: 기업명을 넣지 않습니다(검색이 이미 기업별로 필터링됨). 영문 기술 용어를 병기해 영문 스펙 문서에 Jina 가중치 0.7이 적용됩니다.
 
 청킹 기본값은 1,200자/중첩 150자입니다. 페이지·헤딩 경계를 넘지 않습니다.
 PDF 목차와 본문에서 확인한 헤딩만 사용하고, 목차가 없으면 페이지 중심으로 나눕니다.
@@ -210,6 +211,7 @@ results[]
 
 근거 없는 항목은 data에서 제외하고 missing_information에 “근거 부족”을 남깁니다.
 검색 결과가 없으면 OpenAI를 호출하지 않습니다. 청크 ID, 기업, 인용문 원문 일치를 검증합니다.
+인용 대조 시 PDF 추출 흔적(단어 사이 공백, 줄 끝 하이픈, 합자 ﬁ)과 인용 끝의 `...`·마침표는 무시하며, 인용 중간의 `...`는 생략으로 보고 각 구간이 원문에 순서대로 있어야 통과합니다.
 원문 인용 검증은 주장의 의미적 정확성을 완전히 보증하지 않으므로 위 페이지 대조가 필요합니다.
 API·설정 오류는 자료 부족으로 위장하지 않고 오류로 종료합니다.
 
