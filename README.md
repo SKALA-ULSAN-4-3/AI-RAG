@@ -103,8 +103,8 @@ uv run pytest -q
 
 ## Contributors
 
-- 신한수 : (역할 기입)
-- 안영준 : 보고서 생성로직을 중심으로 통합, 검증하는 역할을 중심으로, 기술-시장-경쟁-투자판단을 하는 RAG 에이전트의 결과를 받아 투자 보고서를 생성하는 코드를 구현했습니다. LangGraph State와 역할 간 데이터 연계를 처리하고, 점수 합계·리스크 감점·사용 출처를 검증했습니다. 또한 5페이지 PDF 템플릿을 구성하고, Summary와 본문 인용, Reference 연결을 적용했습니다. 표·그래프·리스크 및 실사 항목을 활용해 보고서의 가독성을 개선하고, 테스트와 PDF 시각 검증을 수행했습니다.
+- 신한수 : (예비군 훈련으로 인한 불참)
+- 안영준 : 보고서 생성 Agent 개발, LangGraph 통합, PDF 시각화, Score & Citation 검증, 통합 테스트
 - 정하윤 : (역할 기입)
-- 손수경 : (역할 기입)
+- 손수경 : PDF & Web Parsing, 문서 Chunking, KURE/Jina모델 활용 Embedding, FAISS Retrieval, Technical Summary & Classification Agents개발
 - 손경락 : (역할 기입)
