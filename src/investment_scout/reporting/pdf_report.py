@@ -1,7 +1,8 @@
 """5페이지 투자 보고서 PDF: 설계서 목차(Summary → 시장 → 기업 → 성장·리스크 → Reference).
 
 내용은 content.build_report_content()가 최종 State에서 추출한 값만 사용한다.
-각 페이지는 한 쪽 틀(KeepInFrame)에 넣어 정확히 5페이지를 보장하고, 1페이지 요약은 반 페이지 틀로 제한한다.
+각 페이지는 한 쪽 틀(KeepInFrame)에 넣어 페이지 수를 고정(7쪽, 최대 10쪽)하고, 1페이지 요약은 반 페이지 틀로 제한한다.
+5쪽 전체 결과·평가 과정(Supervisor 재작업 기록), 6쪽 보고서 품질 평가, 7쪽 Reference.
 """
 
 from __future__ import annotations
@@ -14,7 +15,8 @@ from typing import Any
 
 from investment_scout.reporting.content import FIELD_LABELS, shorten
 
-MAX_PDF_PAGES = 5
+MAX_PDF_PAGES = 10   # 과제 기준: 최대 10장
+REPORT_PAGES = 7     # Summary·시장·기업·성장/리스크·전체 결과/과정·품질 평가·Reference
 TEAM = "울산 캠퍼스 4반 3조"
 MEMBERS = "신한수, 안영준, 정하윤, 손수경, 손경락"
 NAVY, TEAL, GREEN, RED, GREY = "#102A43", "#0B7285", "#2B8A3E", "#C92A2A", "#829AB1"
@@ -50,7 +52,8 @@ def _register_font() -> str:
     return name
 
 
-def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members: str = MEMBERS) -> dict:
+def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members: str = MEMBERS,
+                      process: dict | None = None, quality: dict | None = None) -> dict:
     try:
         from pypdf import PdfReader
         from reportlab.graphics.charts.barcharts import HorizontalBarChart, VerticalBarChart
@@ -301,8 +304,56 @@ def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members:
                       "투자 집행 전 재무·밸류에이션·경영진 실사가 필요합니다."], limit=240)
     story += page(page4)
 
-    # ---- Page 5: Reference
-    page5 = [P("5. Reference", h1),
+    # ---- Page 5: 전체 평가 결과와 평가 과정 (Supervisor)
+    proc = process or {}
+    reworks = proc.get("reworks") or {}
+    label = {"tech": "기술", "market": "시장", "competitor": "경쟁"}
+    rows = [["순위", "기업", "지역", "기술 분류", "총점", "판단", "근거 보강 재작업"]]
+    for r in k["ranking"]:
+        done = reworks.get(r["startup"]) or {}
+        rows.append([str(r["rank"]), r["startup"], r["region"], shorten(r["category"], 24), f"{r['total']:.0f}",
+                     r["status"], ", ".join(f"{label.get(p, p)} {n}회" for p, n in done.items()) or "-"])
+    page_process = [P("5. 전체 평가 결과와 평가 과정", h1),
+                    P(f"평가 대상 {len(k['ranking'])}개사 전체 결과 (총점 순)", h2),
+                    grid(rows, [11 * mm, 34 * mm, 12 * mm, 36 * mm, 13 * mm, 32 * mm, frame_w - 138 * mm])]
+    if proc:
+        reasons = [f"{name}: " + "; ".join(f"{label.get(p, p)} — {why}" for p, why in why_map.items())
+                   for name, why_map in (proc.get("rework_reasons") or {}).items()]
+        page_process += [P("Supervisor 평가 과정", h2),
+                         P(f"Supervisor가 매 단계 State(수집된 관점·근거 충분도)를 보고 다음 에이전트를 선택했습니다. "
+                           f"총 {proc.get('steps', 0)}단계, 근거 보강 재작업 {sum(sum(v.values()) for v in reworks.values())}회, "
+                           f"보고서 작성 {proc.get('report_attempts', 0)}회. 상세 결정 로그는 trace_id "
+                           f"{proc.get('trace_id', '-')}로 외부 로그·LangSmith에서 확인할 수 있습니다.", body)]
+        page_process += bullets(reasons[:10], small, empty="근거 부족으로 재작업한 기업이 없습니다.", limit=200)
+    story += page(page_process)
+
+    # ---- Page 6: 보고서 품질 평가
+    page_quality = [P("6. 보고서 품질 평가", h1),
+                    P("보고서 생성 후 3개 항목(Groundedness·중립성·편향 통제)을 규칙 검사와 LLM Judge로 평가하고, "
+                      "미달이면 Supervisor가 해당 에이전트 재작업 또는 보고서 재작성을 지시합니다(최대 2회).", body)]
+    if quality:
+        q_rows = [["항목", "세부 검사", "결과", "상세"]]
+        for item in quality["items"].values():
+            for name, check in item["checks"].items():
+                q_rows.append([item["label"], name, "통과" if check["passed"] else "미달", shorten(check["detail"], 120)])
+        page_quality += [P(f"평가 결과 ({quality['attempt']}회차): {'통과' if quality['passed'] else '미달 — 한계로 명시'}", h2),
+                         grid(q_rows, [24 * mm, 46 * mm, 14 * mm, frame_w - 84 * mm])]
+        if not quality["passed"]:
+            page_quality += bullets([f"미달 항목: {', '.join(quality['failed_items'])}",
+                                     "개선 상한에 도달해 위 항목은 보고서의 한계로 남깁니다."], small)
+    else:
+        page_quality.append(P("품질 평가 전 초안입니다.", body))
+    page_quality += [P("평가 기준", h2)]
+    page_quality += bullets([
+        "Groundedness — 본문 주장마다 출처 번호 연결(G1), 점수·판단 일치(G2), 주장과 인용 원문 일치 90% 이상(G3, LLM)",
+        "중립성 — 최신·첨단 기술만으로 판단하지 않음: 추천 근거 2개 분야 이상(N1), 약점·리스크 서술(N2), "
+        "근거 없는 홍보 표현 금지(N3), 논리 균형 4/5 이상(N4, LLM)",
+        "편향 통제 — 섹션별 출처 2개 이상(B1), 단일 출처 의존 50% 이하(B2), 제3자 출처 존재(B3), 반대 근거 균형 4/5 이상(B4, LLM)",
+    ], small)
+    story += page(page_quality)
+
+    # ---- Page 7: Reference
+    page5 = [P("7. Reference", h1),
              P("보고서 본문의 [번호]와 연결되며, 에이전트가 실제로 인용한 자료만 포함합니다. 형식: 가이드 REFERENCE 표기법.", small),
              Spacer(1, 2)]
     if k["source_summary"]:
@@ -329,16 +380,16 @@ def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members:
         canvas.setFillColor(c("#627D98"))
         canvas.drawString(margin, height - 12 * mm, k["title"])
         canvas.drawString(margin, 9 * mm, team)
-        canvas.drawRightString(width - margin, 9 * mm, f"{doc.page} / {MAX_PDF_PAGES}")
+        canvas.drawRightString(width - margin, 9 * mm, f"{doc.page} / {REPORT_PAGES}")
         canvas.restoreState()
 
     document = SimpleDocTemplate(str(output), pagesize=A4, leftMargin=margin, rightMargin=margin,
                                  topMargin=18 * mm, bottomMargin=16 * mm, title=k["title"], author=team)
     document.build(story, onFirstPage=decorate, onLaterPages=decorate)
     pages = len(PdfReader(str(output)).pages)
-    if pages != MAX_PDF_PAGES:
+    if pages != REPORT_PAGES or pages > MAX_PDF_PAGES:
         output.unlink(missing_ok=True)
-        raise RuntimeError(f"보고서는 정확히 {MAX_PDF_PAGES}페이지여야 합니다. 생성 결과: {pages}페이지")
+        raise RuntimeError(f"보고서는 {REPORT_PAGES}페이지(최대 {MAX_PDF_PAGES})여야 합니다. 생성 결과: {pages}페이지")
     return {"path": str(output.resolve()), "pages": pages, "references": len(k["references"])}
 
 

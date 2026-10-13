@@ -82,12 +82,27 @@ def collect_sources(state: dict) -> dict[str, dict]:
     return sources
 
 
-def claims_by_key(analysis: dict, refs: References) -> dict[str, list[str]]:
-    """분석 결과의 검증된 주장을 항목별로 모으고 출처 번호를 붙임."""
+PROMOTIONAL = re.compile(
+    r"세계 최초|업계 최초|최초의|압도적|최첨단|최고의|혁신적|획기적|독보적|유일한|"
+    r"world'?s first|industry'?s first|revolution|unrivaled|best-in-class|cutting-edge|breakthrough", re.I)
+
+
+def claims_by_key(analysis: dict, refs: References, *, strict: bool = False) -> dict[str, list[str]]:
+    """분석 결과의 검증된 주장을 항목별로 모으고 출처 번호를 붙임.
+
+    strict(품질 평가 미달 후 재작성): 출처 번호가 붙지 않는 주장은 제외하고,
+    홍보성 표현이 있는 주장은 '(회사 주장)'으로 표시해 사실 단정을 피함.
+    """
     grouped: dict[str, list[str]] = {}
     for claim in (analysis or {}).get("claims", []):
         key = (claim.get("data_keys") or ["기타"])[0]
-        grouped.setdefault(key, []).append(f"{claim['text'].strip()} {refs.cite(claim.get('source_ids', []))}".strip())
+        cite = refs.cite(claim.get("source_ids", []))
+        text = claim["text"].strip()
+        if strict and not cite:
+            continue
+        if strict and PROMOTIONAL.search(text):
+            text = f"{text.rstrip('.')} (회사 주장)"
+        grouped.setdefault(key, []).append(f"{text} {cite}".strip())
     return grouped
 
 
@@ -156,7 +171,7 @@ def reference_line(entry: dict) -> tuple[str, str]:
     return "웹페이지", f"{publisher}({date}). {title}. {host}{pages}, {url}"
 
 
-def build_report_content(state: dict) -> dict:
+def build_report_content(state: dict, *, strict: bool = False) -> dict:
     """최종 State → 보고서 내용. 추천 기업이 없으면 최고점 후보를 '보류' 판단으로 기술."""
     history = state.get("evaluation_history") or []
     if not history:
@@ -170,9 +185,9 @@ def build_report_content(state: dict) -> dict:
     refs = References(collect_sources(state))
 
     # 본문 순서대로 출처 번호 부여: 시장 → 기술 → 경쟁 → 채점 근거
-    market = claims_by_key(record.get("market_analysis"), refs)
-    tech = claims_by_key(record.get("tech_summary"), refs)
-    competition = claims_by_key(record.get("competitor_analysis"), refs)
+    market = claims_by_key(record.get("market_analysis"), refs, strict=strict)
+    tech = claims_by_key(record.get("tech_summary"), refs, strict=strict)
+    competition = claims_by_key(record.get("competitor_analysis"), refs, strict=strict)
     claim_sources = {}
     for field in ("tech_summary", "market_analysis", "competitor_analysis"):
         for claim in (record.get(field) or {}).get("claims", []):

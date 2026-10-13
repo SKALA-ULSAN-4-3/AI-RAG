@@ -127,7 +127,7 @@ def test_market_brief_reads_numbers_only_from_quotes():
     assert market_brief({"claims": []}) == "시장 수치 근거 부족"
 
 
-def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
+def test_pdf_is_seven_pages_and_node_updates_only_final_report(state, tmp_path):
     pytest.importorskip("reportlab")
     from pypdf import PdfReader
 
@@ -136,8 +136,9 @@ def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
     assert set(update) == {"final_report"} and "Alpha 투자 추천" in update["final_report"]
     reader = PdfReader(str(output))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    assert len(reader.pages) == 5
-    for heading in ("1. Summary", "2. 선정 시장", "3. 선정 기업", "4. 성장가능성과 리스크", "5. Reference"):
+    assert len(reader.pages) == 7  # 최대 10장 이내
+    for heading in ("1. Summary", "2. 선정 시장", "3. 선정 기업", "4. 성장가능성과 리스크",
+                    "5. 전체 평가 결과와 평가 과정", "6. 보고서 품질 평가", "7. Reference"):
         assert heading in text
     assert "Never cited" not in text
     assert "울산 캠퍼스 4반 3조(신한수, 안영준, 정하윤, 손수경, 손경락)" in text
