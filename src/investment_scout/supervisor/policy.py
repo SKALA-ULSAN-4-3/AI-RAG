@@ -117,13 +117,27 @@ def decide(state: dict) -> Decision:
     return Decision("end", "종료")
 
 
+def can_gather_more(result: dict) -> bool:
+    """더 확보할 자료가 있는가 (State 기반): 확보 가능 문서 수가 기록돼 있고 이미 모두 인용했으면 False.
+
+    기록이 없는 관점(웹 검색 기반 경쟁사 비교)은 추가 검색이 가능하다고 본다.
+    """
+    available = (result or {}).get("available_documents")
+    return available is None or len(documents(result)) < available
+
+
 def revise(state: dict, verdict: dict) -> Decision:
-    """품질 미달 대응: 근거 보강이 필요하면 선정 기업의 해당 관점 재작업, 아니면 보고서 개선(엄격 모드)."""
-    target = (verdict.get("rework_targets") or ["rewrite"])[0]
+    """품질 미달 대응: 근거 보강이 필요하면 선정 기업의 해당 관점 재작업, 아니면 보고서 개선(엄격 모드).
+
+    더 확보할 자료가 없는 관점은 재조사하지 않는다(관련 없는 자료가 섞여 판단이 흔들리는 것을 방지).
+    """
     failed = ", ".join(verdict.get("failed_items") or []) or "기준 미달"
+    chosen = state.get("recommended_startup") or (state.get("final_ranking") or [{}])[0].get("startup")
+    record = next((r for r in state.get("evaluation_history") or [] if r["startup"] == chosen), None)
+    viable = [t for t in verdict.get("rework_targets") or []
+              if t in FIELD_OF and record and can_gather_more(record.get(FIELD_OF[t]))]
+    target = viable[0] if viable else "rewrite"
     if target in FIELD_OF:
-        chosen = state.get("recommended_startup") or (state.get("final_ranking") or [{}])[0].get("startup")
-        record = next((r for r in state.get("evaluation_history") or [] if r["startup"] == chosen), None)
         if record:
             loaded = {
                 "current": record["profile"], "tech_summary": record["tech_summary"],
@@ -136,5 +150,7 @@ def revise(state: dict, verdict: dict) -> Decision:
             }
             return Decision(target, f"품질 미달({failed}) → {chosen} {AGENT_LABEL[target]} 근거 보강 재작업",
                             {"phase": "revise", "report_mode": "strict", **loaded})
-    return Decision("report", f"품질 미달({failed}) → 근거 없는 문장 제외·표현 완화한 보고서 재작성",
+    skipped = [t for t in verdict.get("rework_targets") or [] if t in FIELD_OF]
+    note = f", {'·'.join(AGENT_LABEL[t] for t in skipped)} 추가 자료 없음" if skipped else ""
+    return Decision("report", f"품질 미달({failed}{note}) → 근거 없는 문장 제외·표현 완화한 보고서 재작성",
                     {"phase": "quality", "report_mode": "strict"})

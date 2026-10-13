@@ -77,13 +77,21 @@ class AgentSet:
         min_score = 0.22 if rework else self.min_score  # 재작업: 검색 하한을 낮춰 더 넓게
         update = self._tech(self.tech_index, min_score=min_score)(state)
         update.update(self._classifier(self.tech_index, min_score=min_score)({**state, **update}))
+        # 확보 가능한 자료 수: Supervisor가 '더 찾을 자료가 있는가'를 State로 판단하는 데 사용
+        name = state["current_startup"]["name"]
+        update["tech_summary"]["available_documents"] = len(
+            {c.document_id for c in self.tech_index.chunks if c.company == name})
         return update
 
     def market(self, state: dict, *, rework: bool) -> dict:
         if self.market_agent is None:
             return {"market_analysis": empty_analysis_result(missing_information=["시장 인덱스 없음"])}
         # 재작업: 기술 분류와 무관하게 전체 세부 시장에서 근거 탐색
-        return self.market_agent({**state, "tech_category": "" if rework else state.get("tech_category", "")})
+        update = self.market_agent({**state, "tech_category": "" if rework else state.get("tech_category", "")})
+        segments = set(update["market_analysis"].get("segments") or [])
+        update["market_analysis"]["available_documents"] = len(
+            {c.document_id for c in self.market_agent.index.chunks if c.company in segments})
+        return update
 
     def competitor(self, state: dict, *, rework: bool) -> dict:
         if self.web_search is None:

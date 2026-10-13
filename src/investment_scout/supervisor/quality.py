@@ -3,7 +3,9 @@
 - Groundedness: G1 본문 주장마다 [n]·Reference 연결, G2 총점·추천의 내부 일치, G3 주장-인용 원문 일치(LLM)
 - 중립성 (최신·첨단 기술만으로 판단하지 않음): N1 추천 근거가 2개 이상 분야, N2 약점·리스크 서술,
   N3 근거 없는 최상급·홍보 표현 금지, N4 '기술이 새로워서 좋다'식 논리 비약 여부(LLM)
-- 편향 통제: B1 섹션별 출처 2개 이상, B2 단일 출처 의존 50% 이하, B3 제3자 출처 존재, B4 반대 근거 균형(LLM)
+- 편향 통제: B1 출처 다양성(섹션마다 1개 이상, 보고서 전체 서로 다른 출처 3개 이상), B2 단일 출처 의존 50% 이하,
+  B3 제3자 출처 존재, B4 반대 근거 균형(LLM)
+  (세부 시장·기업별 자료가 1건뿐인 경우가 있어 섹션별 2개는 200페이지 한도에서 달성 불가 → 편중은 B2가 검사)
 
 미달 항목에 따라 재작업 대상을 지정한다: 출처 부족 섹션 → 해당 관점 에이전트, 표현·연결 문제 → 보고서 재작성.
 """
@@ -77,7 +79,10 @@ def evaluate_report(content: dict, pairs: list[dict], *, attempt: int,
     n3 = [t for t in entries if SUPERLATIVE.search(t) and "회사 주장" not in t]
     # 편향 통제
     distinct = {name: {int(n) for t in texts for n in CITE.findall(t)} for name, texts in sections.items()}
-    thin = [name for name, refs in distinct.items() if len(refs) < 2]
+    empty = [name for name, refs in distinct.items() if not refs]
+    total_distinct = len(set().union(*distinct.values())) if distinct else 0
+    # 전체 다양성 부족이면 출처가 1개뿐인 섹션을 보강 대상으로
+    thin = empty or ([name for name, refs in distinct.items() if len(refs) == 1] if total_distinct < 3 else [])
     occurrences = Counter(int(n) for t in entries for n in CITE.findall(t))
     top_share = max(occurrences.values()) / sum(occurrences.values()) if occurrences else 1.0
     company = content["company"].lower()
@@ -107,8 +112,9 @@ def evaluate_report(content: dict, pairs: list[dict], *, attempt: int,
             "N4 논리 균형(LLM)": (verdict.neutrality >= PASS_LLM, f"{verdict.neutrality}/5 — {verdict.neutrality_reason}"),
         },
         "bias": {
-            "B1 섹션별 출처 2개 이상": (not thin, "충족" if not thin else
-                                   f"부족: {', '.join(SECTION_LABEL[s] for s in thin)}"),
+            "B1 출처 다양성": (not empty and total_distinct >= 3,
+                           f"전체 {total_distinct}개" + (f", 출처 없는 섹션: {', '.join(SECTION_LABEL[s] for s in empty)}"
+                                                       if empty else "")),
             "B2 단일 출처 의존 50% 이하": (top_share <= 0.5, f"최대 {top_share:.0%}"),
             "B3 제3자 출처": (bool(third_party), f"{len(third_party)}건"),
             "B4 반대 근거 균형(LLM)": (verdict.bias >= PASS_LLM, f"{verdict.bias}/5 — {verdict.bias_reason}"),

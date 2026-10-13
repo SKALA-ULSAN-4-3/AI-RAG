@@ -187,16 +187,34 @@ def test_quality_rules_point_rework_to_thin_section():
                "summary": [], "risks": [], "groups": [{"score": 80}],
                "items": [{"group": "market", "score": 10, "max_points": 10, "question": "q", "rationale": "r"},
                          {"group": "technology", "score": 5, "max_points": 15, "question": "q", "rationale": "r"}],
-               "market": {"market_size": ["시장 규모 [1]"]},                       # 시장 출처 1개 → B1 미달
-               "tech": {"core_technology": ["기술 [2]", "세계 최초 기술 [3]"]},       # 홍보 표현 → N3 미달
-               "competition": {"compare_product": ["비교 [4]", "비교 [5]"]},
-               "references": [("웹페이지", f"Pub{n}(2026). t. x", n) for n in range(1, 6)]}
+               # 전체 서로 다른 출처 2개(<3) → B1 미달, 출처 1개뿐인 섹션이 보강 대상
+               "market": {"market_size": ["시장 규모 [1]"]},
+               "tech": {"core_technology": ["기술 [2]", "세계 최초 기술 [2]"]},       # 홍보 표현 → N3 미달
+               "competition": {"compare_product": ["비교 [2]"]},
+               "references": [("웹페이지", f"Pub{n}(2026). t. x", n) for n in range(1, 3)]}
     verdict = evaluate_report(content, [], attempt=1, judge=judge_sequence(5))
     assert not verdict["passed"]
-    assert verdict["items"]["bias"]["checks"]["B1 섹션별 출처 2개 이상"]["passed"] is False
+    assert verdict["items"]["bias"]["checks"]["B1 출처 다양성"]["passed"] is False
     assert verdict["items"]["neutrality"]["checks"]["N3 근거 없는 홍보 표현"]["passed"] is False
     assert verdict["rework_targets"][0] == "market" and "rewrite" in verdict["rework_targets"]
+    # 섹션마다 1개 이상 + 전체 3개 이상이면 B1 통과 (세부 시장 자료가 1건뿐이어도)
+    content["competition"] = {"compare_product": ["비교 [3]"]}
+    content["references"].append(("웹페이지", "Pub3(2026). t. x", 3))
+    ok = evaluate_report(content, [], attempt=1, judge=judge_sequence(5))
+    assert ok["items"]["bias"]["checks"]["B1 출처 다양성"]["passed"] is True
 
+
+def test_revise_skips_rework_when_no_more_documents():
+    from investment_scout.supervisor.policy import revise
+
+    exhausted = {"claims": [{"source_ids": ["m_siph:p1"]}], "available_documents": 1}
+    record = {"startup": "A", "profile": {"name": "A"}, "tech_category": "PHOTONICS", "tech_summary": {},
+              "market_analysis": exhausted, "competitor_analysis": {"claims": []}}
+    state = {"recommended_startup": "A", "evaluation_history": [record]}
+    only_market = revise(state, {"rework_targets": ["market", "rewrite"], "failed_items": ["편향 통제:B1"]})
+    assert only_market.next == "report" and "추가 자료 없음" in only_market.reason
+    with_competitor = revise(state, {"rework_targets": ["market", "competitor"], "failed_items": ["편향 통제:B4"]})
+    assert with_competitor.next == "competitor"   # 웹 검색 기반 관점은 추가 검색 가능
 
 class Crash(BaseException):
     """프로세스 중단 흉내 (노드의 Exception fallback에 잡히지 않음)."""
