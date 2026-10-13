@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any, List, Optional
 
 from investment_scout.search.base import (
@@ -53,11 +54,22 @@ class TavilySearchProvider:
 
         self._client = TavilySearch(max_results=5, tavily_api_key=key)
 
+    RETRY_WAITS = (3.0, 8.0)  # 요청 과다(429) 시 대기 후 재시도
+
     def search(self, query: str, *, max_results: int = 5) -> List[SearchHit]:
-        try:
-            raw = self._client.invoke({"query": query})
-        except Exception as exc:  # 네트워크/레이트리밋/제공자 오류
-            raise SearchFailure(f"Tavily 검색 실패 (query={query!r}): {exc}") from exc
+        for attempt in range(len(self.RETRY_WAITS) + 1):
+            try:
+                raw = self._client.invoke({"query": query})
+            except Exception as exc:  # 네트워크/레이트리밋/제공자 오류
+                raise SearchFailure(f"Tavily 검색 실패 (query={query!r}): {exc}") from exc
+            # Tavily는 한도 초과 등을 예외 대신 {"error": ...}로 돌려줌: 결과 없음으로 위장하지 않고 오류 처리
+            error = raw.get("error") if isinstance(raw, dict) else None
+            if not error:
+                break
+            if "429" in str(error) and attempt < len(self.RETRY_WAITS):
+                time.sleep(self.RETRY_WAITS[attempt])
+                continue
+            raise SearchFailure(f"Tavily 검색 오류 (query={query!r}): {error}")
 
         results = raw.get("results", []) if isinstance(raw, dict) else raw
         if not isinstance(results, list):

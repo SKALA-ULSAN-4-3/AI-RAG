@@ -171,3 +171,21 @@ def test_search_exit_signal_downgrades_to_needs_verification_not_ineligible():
     assert profile["is_public"] is False
     assert profile["eligibility"]["verdict"] == "NEEDS_VERIFICATION"
     assert [c["name"] for c in result["scout_result"]["ineligible"]] == []
+
+
+def test_tavily_error_payload_is_raised_not_treated_as_empty(monkeypatch):
+    from investment_scout.search.base import SearchFailure
+    from investment_scout.search.tavily import TavilySearchProvider
+
+    class Blocked:
+        calls = 0
+
+        def invoke(self, payload):
+            Blocked.calls += 1
+            return {"error": "Error 429: Your request has been blocked due to excessive requests."}
+
+    monkeypatch.setattr(TavilySearchProvider, "RETRY_WAITS", (0.0, 0.0))
+    provider = TavilySearchProvider(client=Blocked())
+    with pytest.raises(SearchFailure, match="429"):
+        provider.search("Fractile competitors")
+    assert Blocked.calls == 3  # 최초 1회 + 재시도 2회
