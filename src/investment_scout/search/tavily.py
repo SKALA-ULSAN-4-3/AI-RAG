@@ -54,10 +54,16 @@ class TavilySearchProvider:
 
         self._client = TavilySearch(max_results=5, tavily_api_key=key)
 
-    RETRY_WAITS = (3.0, 8.0)  # 요청 과다(429) 시 대기 후 재시도
+    RETRY_WAITS = (5.0, 15.0, 30.0)  # 요청 과다(429) 시 대기 후 재시도 (개발용 키의 일시 차단 대응)
+    MIN_INTERVAL = 1.0               # 호출 사이 최소 간격(초): 재작업 시 검색어가 몰려 차단되는 것을 방지
+    _last_call = 0.0
 
     def search(self, query: str, *, max_results: int = 5) -> List[SearchHit]:
         for attempt in range(len(self.RETRY_WAITS) + 1):
+            wait = self.MIN_INTERVAL - (time.monotonic() - TavilySearchProvider._last_call)
+            if wait > 0:
+                time.sleep(wait)
+            TavilySearchProvider._last_call = time.monotonic()
             try:
                 raw = self._client.invoke({"query": query})
             except Exception as exc:  # 네트워크/레이트리밋/제공자 오류

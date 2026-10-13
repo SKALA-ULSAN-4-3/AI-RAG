@@ -185,6 +185,7 @@ def test_tavily_error_payload_is_raised_not_treated_as_empty(monkeypatch):
             return {"error": "Error 429: Your request has been blocked due to excessive requests."}
 
     monkeypatch.setattr(TavilySearchProvider, "RETRY_WAITS", (0.0, 0.0))
+    monkeypatch.setattr(TavilySearchProvider, "MIN_INTERVAL", 0.0)
     provider = TavilySearchProvider(client=Blocked())
     with pytest.raises(SearchFailure, match="429"):
         provider.search("Fractile competitors")
