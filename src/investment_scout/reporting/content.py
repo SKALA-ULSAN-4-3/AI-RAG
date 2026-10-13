@@ -125,12 +125,16 @@ def market_points(analysis: dict) -> list[tuple[int, float]]:
     """그래프용 시장 규모 (연도, 십억 달러): 인용 원문의 'USD x billion in/by 20xx' 표현에서만 추출."""
     pattern = re.compile(r"(?:USD|US\$|\$)\s?([\d.,]+)\s*(billion|million|bn)\b[^.;]{0,60}?"
                          r"\b(?:in|by|of)\s*(?:the end of\s*)?(20\d\d)", re.I)
+    # 표 형식: "Market size, 2025: USD 170.81 Billion"
+    year_first = re.compile(r"(20\d\d)\s*:\s*(?:USD|US\$|\$)\s?([\d.,]+)\s*(billion|million|bn)\b", re.I)
     points = {}
     for claim in (analysis or {}).get("claims", []):
         if "market_size" not in claim.get("data_keys", []):
             continue
         for citation in claim.get("citations", []):
-            for amount, unit, year in pattern.findall(citation.get("quote", "")):
+            quote = citation.get("quote", "")
+            found = pattern.findall(quote) + [(a, u, y) for y, a, u in year_first.findall(quote)]
+            for amount, unit, year in found:
                 value = float(amount.replace(",", ""))
                 points.setdefault(int(year), value / 1000 if unit.lower() == "million" else value)
     return sorted(points.items())

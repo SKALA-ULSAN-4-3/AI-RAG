@@ -159,3 +159,11 @@ def test_cited_segments_follow_the_document_behind_the_numbers():
     segment_of = {"m_edge": "AI_CHIP", "m_imc": "IN_MEMORY_COMPUTE"}
     assert cited_segments(analysis, segment_of) == ["AI_CHIP"]
     assert cited_segments({"segments": ["CHIPLET"], "claims": []}, segment_of) == ["CHIPLET"]
+
+
+def test_market_points_reads_year_first_table_quotes():
+    from investment_scout.reporting.content import market_points
+
+    analysis = {"claims": [{"data_keys": ["market_size"], "citations": [
+        {"quote": "Market size, 2025: USD 170.81 Billion\n\nMarket forecast, 2030: USD 372.68 Billion"}]}]}
+    assert market_points(analysis) == [(2025, 170.81), (2030, 372.68)]
