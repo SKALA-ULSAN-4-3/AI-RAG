@@ -147,3 +147,15 @@ def test_pdf_is_seven_pages_and_node_updates_only_final_report(state, tmp_path):
 def test_markdown_summary_contains_scores(state):
     markdown = build_markdown_report(build_report_content(state))
     assert "**총점** | **85/100**" in markdown
+
+
+def test_cited_segments_follow_the_document_behind_the_numbers():
+    from investment_scout.reporting.content import cited_segments
+
+    analysis = {"segments": ["IN_MEMORY_COMPUTE", "AI_CHIP"], "claims": [
+        {"data_keys": ["market_size"], "source_ids": ["m_edge:p2:s1:c1"]},
+        {"data_keys": ["customer_demand"], "source_ids": ["m_imc:p1:s1:c1"]},
+    ]}
+    segment_of = {"m_edge": "AI_CHIP", "m_imc": "IN_MEMORY_COMPUTE"}
+    assert cited_segments(analysis, segment_of) == ["AI_CHIP"]
+    assert cited_segments({"segments": ["CHIPLET"], "claims": []}, segment_of) == ["CHIPLET"]

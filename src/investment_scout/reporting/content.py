@@ -106,6 +106,21 @@ def claims_by_key(analysis: dict, refs: References, *, strict: bool = False) -> 
     return grouped
 
 
+def cited_segments(analysis: dict, segment_of: dict[str, str]) -> list[str]:
+    """보고서에 표기할 세부 시장: 시장 규모·성장률 주장이 실제로 인용한 문서의 세부 시장 (인용 순서).
+
+    에이전트가 검색한 세부 시장 중 첫 번째가 아니라 수치의 출처로 이름을 붙여야 수치와 시장 이름이 어긋나지 않는다.
+    인용이 없으면 검색한 세부 시장을 그대로 쓴다.
+    """
+    analysis = analysis or {}
+    if len(analysis.get("segments") or []) >= 6:  # 분류 없이 전체 시장을 검색한 경우: 표기는 호출부에서 '분류 미확정'
+        return list(analysis["segments"])
+    cited = [segment_of.get(sid.split(":")[0]) for key in ("market_size", "growth_rate")
+             for claim in analysis.get("claims", []) if key in claim.get("data_keys", [])
+             for sid in claim.get("source_ids", [])]
+    return list(dict.fromkeys(s for s in cited if s)) or list(analysis.get("segments") or [])
+
+
 def market_points(analysis: dict) -> list[tuple[int, float]]:
     """그래프용 시장 규모 (연도, 십억 달러): 인용 원문의 'USD x billion in/by 20xx' 표현에서만 추출."""
     pattern = re.compile(r"(?:USD|US\$|\$)\s?([\d.,]+)\s*(billion|million|bn)\b[^.;]{0,60}?"
@@ -216,10 +231,12 @@ def build_report_content(state: dict, *, strict: bool = False) -> dict:
     qualified = sum(1 for t in table if t["status"] in ("추천", "기준 통과"))
     forced = sum(1 for t in table if t["status"] == "보류(핵심 정보 부족)")
     counts = (state.get("scout_result") or {}).get("counts", {})
-    segments = [s for s in (record.get("market_analysis") or {}).get("segments", [])]
+    segment_of = {source.get("document_id") or sid.split(":")[0]: source.get("company")
+                  for sid, source in collect_sources(state).items() if source.get("company") in MARKET_SEGMENT_LABELS}
+    segments = cited_segments(record.get("market_analysis"), segment_of)
     segment_mix: dict[str, int] = {}
     for r in history:
-        segs = (r.get("market_analysis") or {}).get("segments") or []
+        segs = cited_segments(r.get("market_analysis"), segment_of)
         label = MARKET_SEGMENT_LABELS.get(segs[0], segs[0]) if len(segs) < 6 and segs else "분류 미확정"
         segment_mix[label] = segment_mix.get(label, 0) + 1
 
@@ -263,7 +280,7 @@ def build_report_content(state: dict, *, strict: bool = False) -> dict:
     # 다른 평가 기업이 속한 세부 시장 비교 (시장성 에이전트 결과)
     peer_markets = {}
     for r in history:
-        segs = (r.get("market_analysis") or {}).get("segments") or []
+        segs = cited_segments(r.get("market_analysis"), segment_of)
         if len(segs) >= 6 or not segs:
             continue
         label = MARKET_SEGMENT_LABELS.get(segs[0], segs[0])

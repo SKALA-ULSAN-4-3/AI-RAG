@@ -246,7 +246,7 @@ def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members:
     score_rows.append(["합계", f"항목 합계 {subtotal} + 리스크 {k['risk_penalty']}", f"{k['total']:.0f}/100",
                        f"추천 기준 {k['threshold']}점 · 3회 채점 {k['sample_totals']}"])
     page3 = [P(f"3. 선정 기업: {k['company']}", h1), top_row, P("에이전트 평가 점수표 (설계서 Score Table·체크리스트)", h2),
-             grid(score_rows, [17 * mm, 58 * mm, 13 * mm, frame_w - 88 * mm])]
+             grid(score_rows, [17 * mm, 56 * mm, 16 * mm, frame_w - 89 * mm])]
     team_item = next((i for i in k["items"] if i["key"] == "team"), None)
     page3 += [P("팀", h2),
               P(f"{k['profile']['설립']}년 설립, {k['profile']['투자 단계']} 단계. "
@@ -321,7 +321,7 @@ def render_pdf_report(content: dict, output: Path, *, team: str = TEAM, members:
                    for name, why_map in (proc.get("rework_reasons") or {}).items()]
         page_process += [P("Supervisor 평가 과정", h2),
                          P(f"Supervisor가 매 단계 State(수집된 관점·근거 충분도)를 보고 다음 에이전트를 선택했습니다. "
-                           f"총 {proc.get('steps', 0)}단계, 근거 보강 재작업 {sum(sum(v.values()) for v in reworks.values())}회, "
+                           f"보고서 작성까지 {proc.get('steps', 0)}단계, 근거 보강 재작업 {sum(sum(v.values()) for v in reworks.values())}회, "
                            f"보고서 작성 {proc.get('report_attempts', 0)}회. 상세 결정 로그는 trace_id "
                            f"{proc.get('trace_id', '-')}로 외부 로그·LangSmith에서 확인할 수 있습니다.", body)]
         page_process += bullets(reasons[:10], small, empty="근거 부족으로 재작업한 기업이 없습니다.", limit=200)

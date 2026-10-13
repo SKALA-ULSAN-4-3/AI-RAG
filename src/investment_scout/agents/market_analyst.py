@@ -76,6 +76,24 @@ def growth_from_size_quotes(result: dict) -> dict:
     return result
 
 
+# 원문 시장 이름이 수식어로 구분되는 세부 시장: LLM이 'AI 시장'처럼 줄여 쓰면 다른 시장과 혼동되므로 코드로 복원
+QUALIFIED_MARKET = {"AI_CHIP": "엣지 AI 시장"}
+BARE_AI_MARKET = re.compile(r"(?<![가-힣A-Za-z] )(?<![가-힣A-Za-z])AI 시장")
+
+
+def qualify_market_names(result: dict) -> dict:
+    """인용 문서의 세부 시장이 수식어가 필요한 시장(엣지 AI)인데 주장이 'AI 시장'으로만 적혀 있으면 원문 이름으로 고침."""
+    segment_of = {row["source_id"]: row.get("company") for row in result.get("evidence") or []}
+    for claim in result["claims"]:
+        segments = {segment_of.get(i) for i in claim.get("source_ids", [])}
+        if len(segments) == 1 and (name := QUALIFIED_MARKET.get(segments.pop())):
+            claim["text"] = BARE_AI_MARKET.sub(name, claim["text"])
+            for key in claim.get("data_keys", []):
+                if isinstance(result["data"].get(key), str):
+                    result["data"][key] = BARE_AI_MARKET.sub(name, result["data"][key])
+    return result
+
+
 class MarketAnalyst:
     def __init__(self, index, *, generator=None, min_score=0.30, top_k=10):
         self.index = index
@@ -113,6 +131,7 @@ class MarketAnalyst:
                 merged = GroundedResponse(facts=[*response.facts, *retry.facts],
                                           missing_information=response.missing_information)
                 result = growth_from_size_quotes(self._ground(merged, hits, segments))
+        result = qualify_market_names(result) if result["claims"] else result
         result["segments"] = segments
         return {"market_analysis": result,
                 "source_evidence": register_sources(state, company, result["evidence"])}

@@ -283,3 +283,20 @@ def test_market_analyst_retries_only_missing_required_fields():
     result = MarketAnalyst(index, generator=generator)(state)["market_analysis"]
     assert generator.fields[1] == ("growth_rate",)
     assert result["status"] == "OK" and result["data"]["growth_rate"]
+
+
+def test_qualify_market_names_restores_edge_ai_from_cited_segment():
+    from investment_scout.agents.market_analyst import qualify_market_names
+
+    result = {
+        "evidence": [{"source_id": "m_edge:p2", "company": "AI_CHIP"}, {"source_id": "m_dc:p2", "company": "DATACENTER_AI"}],
+        "claims": [
+            {"text": "AI 시장은 2030년 568억 달러", "source_ids": ["m_edge:p2"], "data_keys": ["market_size"]},
+            {"text": "데이터 센터 가속기 AI 시장 CAGR 16.9%", "source_ids": ["m_dc:p2"], "data_keys": ["growth_rate"]},
+        ],
+        "data": {"market_size": "AI 시장은 2030년 568억 달러", "growth_rate": "데이터 센터 가속기 AI 시장 CAGR 16.9%"},
+    }
+    qualify_market_names(result)
+    assert result["claims"][0]["text"] == "엣지 AI 시장은 2030년 568억 달러"
+    assert result["data"]["market_size"] == "엣지 AI 시장은 2030년 568억 달러"
+    assert result["claims"][1]["text"] == "데이터 센터 가속기 AI 시장 CAGR 16.9%"  # 다른 시장은 그대로
