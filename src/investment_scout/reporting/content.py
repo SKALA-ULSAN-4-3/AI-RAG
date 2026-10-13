@@ -82,25 +82,59 @@ def collect_sources(state: dict) -> dict[str, dict]:
     return sources
 
 
-def claims_by_key(analysis: dict, refs: References) -> dict[str, list[str]]:
-    """분석 결과의 검증된 주장을 항목별로 모으고 출처 번호를 붙임."""
+PROMOTIONAL = re.compile(
+    r"세계 최초|업계 최초|최초의|압도적|최첨단|최고의|혁신적|획기적|독보적|유일한|"
+    r"world'?s first|industry'?s first|revolution|unrivaled|best-in-class|cutting-edge|breakthrough", re.I)
+
+
+def claims_by_key(analysis: dict, refs: References, *, strict: bool = False) -> dict[str, list[str]]:
+    """분석 결과의 검증된 주장을 항목별로 모으고 출처 번호를 붙임.
+
+    strict(품질 평가 미달 후 재작성): 출처 번호가 붙지 않는 주장은 제외하고,
+    홍보성 표현이 있는 주장은 '(회사 주장)'으로 표시해 사실 단정을 피함.
+    """
     grouped: dict[str, list[str]] = {}
     for claim in (analysis or {}).get("claims", []):
         key = (claim.get("data_keys") or ["기타"])[0]
-        grouped.setdefault(key, []).append(f"{claim['text'].strip()} {refs.cite(claim.get('source_ids', []))}".strip())
+        cite = refs.cite(claim.get("source_ids", []))
+        text = claim["text"].strip()
+        if strict and not cite:
+            continue
+        if strict and PROMOTIONAL.search(text):
+            text = f"{text.rstrip('.')} (회사 주장)"
+        grouped.setdefault(key, []).append(f"{text} {cite}".strip())
     return grouped
+
+
+def cited_segments(analysis: dict, segment_of: dict[str, str]) -> list[str]:
+    """보고서에 표기할 세부 시장: 시장 규모·성장률 주장이 실제로 인용한 문서의 세부 시장 (인용 순서).
+
+    에이전트가 검색한 세부 시장 중 첫 번째가 아니라 수치의 출처로 이름을 붙여야 수치와 시장 이름이 어긋나지 않는다.
+    인용이 없으면 검색한 세부 시장을 그대로 쓴다.
+    """
+    analysis = analysis or {}
+    if len(analysis.get("segments") or []) >= 6:  # 분류 없이 전체 시장을 검색한 경우: 표기는 호출부에서 '분류 미확정'
+        return list(analysis["segments"])
+    cited = [segment_of.get(sid.split(":")[0]) for key in ("market_size", "growth_rate")
+             for claim in analysis.get("claims", []) if key in claim.get("data_keys", [])
+             for sid in claim.get("source_ids", [])]
+    return list(dict.fromkeys(s for s in cited if s)) or list(analysis.get("segments") or [])
 
 
 def market_points(analysis: dict) -> list[tuple[int, float]]:
     """그래프용 시장 규모 (연도, 십억 달러): 인용 원문의 'USD x billion in/by 20xx' 표현에서만 추출."""
     pattern = re.compile(r"(?:USD|US\$|\$)\s?([\d.,]+)\s*(billion|million|bn)\b[^.;]{0,60}?"
                          r"\b(?:in|by|of)\s*(?:the end of\s*)?(20\d\d)", re.I)
+    # 표 형식: "Market size, 2025: USD 170.81 Billion"
+    year_first = re.compile(r"(20\d\d)\s*:\s*(?:USD|US\$|\$)\s?([\d.,]+)\s*(billion|million|bn)\b", re.I)
     points = {}
     for claim in (analysis or {}).get("claims", []):
         if "market_size" not in claim.get("data_keys", []):
             continue
         for citation in claim.get("citations", []):
-            for amount, unit, year in pattern.findall(citation.get("quote", "")):
+            quote = citation.get("quote", "")
+            found = pattern.findall(quote) + [(a, u, y) for y, a, u in year_first.findall(quote)]
+            for amount, unit, year in found:
                 value = float(amount.replace(",", ""))
                 points.setdefault(int(year), value / 1000 if unit.lower() == "million" else value)
     return sorted(points.items())
@@ -156,7 +190,7 @@ def reference_line(entry: dict) -> tuple[str, str]:
     return "웹페이지", f"{publisher}({date}). {title}. {host}{pages}, {url}"
 
 
-def build_report_content(state: dict) -> dict:
+def build_report_content(state: dict, *, strict: bool = False) -> dict:
     """최종 State → 보고서 내용. 추천 기업이 없으면 최고점 후보를 '보류' 판단으로 기술."""
     history = state.get("evaluation_history") or []
     if not history:
@@ -170,9 +204,9 @@ def build_report_content(state: dict) -> dict:
     refs = References(collect_sources(state))
 
     # 본문 순서대로 출처 번호 부여: 시장 → 기술 → 경쟁 → 채점 근거
-    market = claims_by_key(record.get("market_analysis"), refs)
-    tech = claims_by_key(record.get("tech_summary"), refs)
-    competition = claims_by_key(record.get("competitor_analysis"), refs)
+    market = claims_by_key(record.get("market_analysis"), refs, strict=strict)
+    tech = claims_by_key(record.get("tech_summary"), refs, strict=strict)
+    competition = claims_by_key(record.get("competitor_analysis"), refs, strict=strict)
     claim_sources = {}
     for field in ("tech_summary", "market_analysis", "competitor_analysis"):
         for claim in (record.get(field) or {}).get("claims", []):
@@ -201,10 +235,12 @@ def build_report_content(state: dict) -> dict:
     qualified = sum(1 for t in table if t["status"] in ("추천", "기준 통과"))
     forced = sum(1 for t in table if t["status"] == "보류(핵심 정보 부족)")
     counts = (state.get("scout_result") or {}).get("counts", {})
-    segments = [s for s in (record.get("market_analysis") or {}).get("segments", [])]
+    segment_of = {source.get("document_id") or sid.split(":")[0]: source.get("company")
+                  for sid, source in collect_sources(state).items() if source.get("company") in MARKET_SEGMENT_LABELS}
+    segments = cited_segments(record.get("market_analysis"), segment_of)
     segment_mix: dict[str, int] = {}
     for r in history:
-        segs = (r.get("market_analysis") or {}).get("segments") or []
+        segs = cited_segments(r.get("market_analysis"), segment_of)
         label = MARKET_SEGMENT_LABELS.get(segs[0], segs[0]) if len(segs) < 6 and segs else "분류 미확정"
         segment_mix[label] = segment_mix.get(label, 0) + 1
 
@@ -248,7 +284,7 @@ def build_report_content(state: dict) -> dict:
     # 다른 평가 기업이 속한 세부 시장 비교 (시장성 에이전트 결과)
     peer_markets = {}
     for r in history:
-        segs = (r.get("market_analysis") or {}).get("segments") or []
+        segs = cited_segments(r.get("market_analysis"), segment_of)
         if len(segs) >= 6 or not segs:
             continue
         label = MARKET_SEGMENT_LABELS.get(segs[0], segs[0])

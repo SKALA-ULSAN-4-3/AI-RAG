@@ -127,7 +127,7 @@ def test_market_brief_reads_numbers_only_from_quotes():
     assert market_brief({"claims": []}) == "시장 수치 근거 부족"
 
 
-def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
+def test_pdf_is_seven_pages_and_node_updates_only_final_report(state, tmp_path):
     pytest.importorskip("reportlab")
     from pypdf import PdfReader
 
@@ -136,8 +136,9 @@ def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
     assert set(update) == {"final_report"} and "Alpha 투자 추천" in update["final_report"]
     reader = PdfReader(str(output))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
-    assert len(reader.pages) == 5
-    for heading in ("1. Summary", "2. 선정 시장", "3. 선정 기업", "4. 성장가능성과 리스크", "5. Reference"):
+    assert len(reader.pages) == 7  # 최대 10장 이내
+    for heading in ("1. Summary", "2. 선정 시장", "3. 선정 기업", "4. 성장가능성과 리스크",
+                    "5. 전체 평가 결과와 평가 과정", "6. 보고서 품질 평가", "7. Reference"):
         assert heading in text
     assert "Never cited" not in text
     assert "울산 캠퍼스 4반 3조(신한수, 안영준, 정하윤, 손수경, 손경락)" in text
@@ -146,3 +147,23 @@ def test_pdf_is_five_pages_and_node_updates_only_final_report(state, tmp_path):
 def test_markdown_summary_contains_scores(state):
     markdown = build_markdown_report(build_report_content(state))
     assert "**총점** | **85/100**" in markdown
+
+
+def test_cited_segments_follow_the_document_behind_the_numbers():
+    from investment_scout.reporting.content import cited_segments
+
+    analysis = {"segments": ["IN_MEMORY_COMPUTE", "AI_CHIP"], "claims": [
+        {"data_keys": ["market_size"], "source_ids": ["m_edge:p2:s1:c1"]},
+        {"data_keys": ["customer_demand"], "source_ids": ["m_imc:p1:s1:c1"]},
+    ]}
+    segment_of = {"m_edge": "AI_CHIP", "m_imc": "IN_MEMORY_COMPUTE"}
+    assert cited_segments(analysis, segment_of) == ["AI_CHIP"]
+    assert cited_segments({"segments": ["CHIPLET"], "claims": []}, segment_of) == ["CHIPLET"]
+
+
+def test_market_points_reads_year_first_table_quotes():
+    from investment_scout.reporting.content import market_points
+
+    analysis = {"claims": [{"data_keys": ["market_size"], "citations": [
+        {"quote": "Market size, 2025: USD 170.81 Billion\n\nMarket forecast, 2030: USD 372.68 Billion"}]}]}
+    assert market_points(analysis) == [(2025, 170.81), (2030, 372.68)]
