@@ -139,7 +139,7 @@ uv run pytest -q
 
 ### Agent
 - 신한수 : State Schema 설계(제어/페이로드 분리, reducer, 종료 상한), SQLite 체크포인트·재개, trace_id 기반 결정 로그·LangSmith 추적 연동 및 트레이스 캡처
-- 안영준 : 보고서 Agent 확장(전체 평가 결과·Supervisor 평가 과정·품질 평가 페이지, 10장 이내), PDF 시각화, 통합 테스트, 제출물 패키징
+- 안영준 : 보고서 Agent 확장(전체 평가 결과·Supervisor 평가 과정·품질 평가 페이지), PDF 시각화, 통합 테스트, 제출물 패키징
 - 정하윤 : Supervisor Agent·그래프 설계(State 기반 `add_conditional_edges` 라우팅, 하위 에이전트 통신 제약, 종료 판단), Supervisor 그래프 Mermaid
 - 손수경 : 재작업용 재조사 검색(검색 범위 확대·한국어/한계/경쟁사 강점 검색어), 출처 다양성 확보, 검색 품질 지표(Hit Rate@K, MRR) 유지
 - 손경락 : 하위 Agent(기술·시장·경쟁사·투자 판단) Supervisor 연동, 근거 충분성 규칙·재작업 지시, 보고서 품질 평가 노드(규칙 + LLM Judge Hybrid)·미달 시 Loop, README 작성
