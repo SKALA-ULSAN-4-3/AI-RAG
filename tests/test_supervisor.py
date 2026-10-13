@@ -113,7 +113,8 @@ def run(tmp_path, agents, names, judge, **kw):
     lines = []
     final = run_supervisor(tech_index=None, agents=agents, scout=FakeScout(names), quality_judge=judge,
                            max_candidates=len(names), report_path=tmp_path / "r.pdf", state_path=tmp_path / "s.json",
-                           log_dir=tmp_path / "logs", echo=lambda line, **k: lines.append(line), **kw)
+                           log_dir=tmp_path / "logs", checkpoint_path=tmp_path / "ckpt.sqlite",
+                           echo=lambda line, **k: lines.append(line), **kw)
     log = [json.loads(line) for line in (tmp_path / "logs" / f"{final['trace_id']}.jsonl").read_text().splitlines()]
     return final, lines, log
 
@@ -195,3 +196,33 @@ def test_quality_rules_point_rework_to_thin_section():
     assert verdict["items"]["bias"]["checks"]["B1 섹션별 출처 2개 이상"]["passed"] is False
     assert verdict["items"]["neutrality"]["checks"]["N3 근거 없는 홍보 표현"]["passed"] is False
     assert verdict["rework_targets"][0] == "market" and "rewrite" in verdict["rework_targets"]
+
+
+class Crash(BaseException):
+    """프로세스 중단 흉내 (노드의 Exception fallback에 잡히지 않음)."""
+
+
+def test_resume_continues_from_sqlite_checkpoint(tmp_path):
+    class CrashOnBeta(FakeAgents):
+        def tech(self, state, *, rework):
+            if state["current_startup"]["name"] == "Beta":
+                raise Crash()
+            return super().tech(state, rework=rework)
+
+    crashed = CrashOnBeta({"Alpha": 80, "Beta": 75})
+    with pytest.raises(Crash):
+        run(tmp_path, crashed, ["Alpha", "Beta"], judge_sequence(5))
+    trace_id = (tmp_path / "logs").glob("*.jsonl").__next__().stem
+    assert (tmp_path / "ckpt.sqlite").exists()
+
+    agents = FakeAgents({"Alpha": 80, "Beta": 75})
+    final, lines, _ = run(tmp_path, agents, ["Alpha", "Beta"], judge_sequence(5), resume=trace_id)
+    assert final["trace_id"] == trace_id
+    assert [r["startup"] for r in final["evaluation_history"]] == ["Alpha", "Beta"]
+    assert not any(name == "Alpha" for _, name, _ in agents.calls)   # 완료된 기업은 다시 평가하지 않음
+    assert any("재개" in line for line in lines) and final["report_path"]
+
+
+def test_resume_without_checkpoint_fails_clearly(tmp_path):
+    with pytest.raises(ValueError, match="재개할 체크포인트가 없습니다"):
+        run(tmp_path, FakeAgents({"Alpha": 80}), ["Alpha"], judge_sequence(5), resume="inv-missing")

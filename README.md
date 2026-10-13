@@ -12,8 +12,8 @@
 
 ## Selected Technologies
 
-- HW : AI 반도체 스타트업 20개사 — NPU·AI 가속기(엣지·데이터센터), CXL 메모리, 실리콘 포토닉스, 인메모리 연산, 칩렛 인터커넥트. AI 서비스의 성능·전력 효율을 좌우하는 기반 기술이고, 비상장·Seed~Series C 스타트업이 국내외에 고르게 있어 비교 평가가 가능
-- SW : 별도 선정 없음 — 칩용 SDK·컴파일러·런타임은 각 기업의 기술 평가(상용화·생태계·차별성)에서 함께 확인
+- HW : AI 반도체 스타트업 20개사(NPU, AI 가속기, CXL, 포토닉스 등) — AI 서비스의 성능·전력 효율을 좌우하는 기반 기술이고, 비상장·Seed~Series C 스타트업이 국내 10개·해외 10개로 고르게 있어 비교 평가가 가능
+- SW : 별도 선정 없음 (각 기업의 SDK·컴파일러는 기술 평가에서 함께 확인)
 
 ## Features
 
@@ -54,8 +54,8 @@
 - 제어 vs 페이로드 분리 : 라우팅·종료·재개용 제어 메타(`trace_id`, `phase`, `candidate_index`, `next_agent`, `rework`, `rework_reason`, `report_attempts`, `step_count`, `node_status`, `last_error`)와 작업 결과(관점별 분석, 점수, 평가 이력, 순위, 보고서, 품질 verdict)를 구분. Supervisor는 제어 필드와 결과의 충분성만 보고 분기
 - 관측성 위치 : 라우팅 사유·재작업 판단·품질 verdict는 State가 아닌 외부 결정 로그(`out/logs/{trace_id}.jsonl`)와 LangSmith 트레이스에 기록. State에는 마지막 결정 1건(`last_decision`)만 둠
 - 지속성 비용 : 청크 본문·전체 출처를 State에 넣지 않고, 인용된 출처의 메타데이터와 300자 이내 근거 문장만 `sources`에 보관. 평가 이력은 근거 본문을 뺀 요약 레코드
-- 상관 : `trace_id` 하나를 체크포인터 `thread_id`, LangSmith `metadata.trace_id`, 결정 로그 파일명에 함께 사용
-- 재개/복구 : 체크포인터(MemorySaver)와 `candidate_index`·`rework`·`node_status`·`last_error`로 중단 지점 확인. 에이전트 오류는 `error`로 기록하고 근거 부족으로 처리해 Supervisor가 재시도 후 계속 진행(fallback)
+- 상관 : `trace_id` 하나를 체크포인트 `thread_id`, LangSmith `metadata.trace_id`, 결정 로그 파일명에 함께 사용
+- 재개/복구 : 단계마다 State를 SQLite 체크포인트 파일(`out/supervisor/checkpoints.sqlite`, 서버·계정 불필요)에 저장하고, 중단되면 `--resume <trace_id>`로 마지막 단계부터 이어서 실행(완료된 기업은 다시 평가하지 않음). `candidate_index`·`rework`·`node_status`·`last_error`로 진행 상태와 오류를 보존하고, 에이전트 오류는 `error`로 기록한 뒤 근거 부족으로 처리해 Supervisor가 재시도 후 계속 진행(fallback)
 - 동시 처리 : Supervisor는 한 번에 하위 노드 하나만 실행해 동시 쓰기가 없음. 누적 필드는 reducer로 병합 규칙을 명시(`evaluation_history` 기업명 기준 upsert, `sources` source_id 기준 병합)
 - 종료 보장 : `step_count ≤ max_steps`(기업당 14단계 + 20), 관점별 재작업 1회, 보고서 개선 2회 상한, LangGraph `recursion_limit` 안전망. 상한 도달 시 한계를 보고서에 명시하고 종료
 
@@ -102,8 +102,8 @@ graph TD
 │   ├── reporting/         # 보고서 내용 추출·7페이지 PDF
 │   └── nodes/, graph.py   # RAG 실습의 순차 그래프 (평가 저장·순위 규칙 재사용)
 ├── docs/                  # 기술 RAG·역할 3·보고서 상세 안내, Supervisor 그래프
-├── tests/                 # 단위·통합 테스트 183개 (API 호출 없음)
-├── out/                   # 수집 PDF·인덱스·최종 State·결정 로그 (Git 제외)
+├── tests/                 # 단위·통합 테스트 185개 (API 호출 없음)
+├── out/                   # 수집 PDF·인덱스·최종 State·결정 로그·체크포인트 (Git 제외)
 ├── output/pdf/            # 투자 보고서 PDF (Git 제외)
 ├── app.py                 # 실행 스크립트
 └── README.md
@@ -121,6 +121,7 @@ cp .env.example .env   # OPENAI_API_KEY, TAVILY_API_KEY, LANGSMITH_API_KEY 입�
 uv run python app.py
 uv run python app.py --max-candidates 3   # 앞의 3개 기업만 빠르게 확인
 uv run python app.py --report-only        # 저장된 결과로 보고서만 다시 생성 (API 호출 없음)
+uv run python app.py --resume <trace_id>  # 중단된 실행을 마지막 단계부터 이어서 실행
 
 # 테스트
 uv run pytest -q

@@ -3,6 +3,7 @@
     uv run python app.py                     # 20개 기업 전체 평가 → 품질 평가 → PDF 보고서
     uv run python app.py --max-candidates 3  # 앞의 3개 기업만 (빠른 확인)
     uv run python app.py --report-only       # 저장된 결과로 PDF만 다시 생성 (API 호출 없음)
+    uv run python app.py --resume <trace_id> # 중단된 실행을 마지막 단계부터 이어서 실행
 
 처음 실행이면 기술·시장 자료 수집과 인덱스 생성을 먼저 수행합니다.
 LANGSMITH_API_KEY가 .env에 있으면 LangSmith 추적이 켜집니다.
@@ -51,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-candidates", type=int, default=20, help="평가할 후보 수 (기본 20)")
     parser.add_argument("--report-only", action="store_true", help="저장된 결과로 PDF만 다시 생성")
     parser.add_argument("--report", type=Path, default=REPORT, help="보고서 PDF 경로")
+    parser.add_argument("--resume", metavar="TRACE_ID", default=None,
+                        help="중단된 실행의 trace_id: SQLite 체크포인트에서 이어서 실행")
     args = parser.parse_args(argv)
     load_dotenv(Path.cwd() / ".env")
 
@@ -95,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         web = None
     final = run_supervisor(tech_index=rag._load_index(TECH_INDEX), market_index=rag._load_index(MARKET_INDEX),
                            web_search=web, max_candidates=args.max_candidates, report_path=args.report,
-                           state_path=STATE)
+                           state_path=STATE, resume=args.resume)
     step("완료")
     print(f"보고서: {args.report.resolve()}\n최종 State: {STATE.resolve()}")
     return 0 if final.get("report_path") else 1
