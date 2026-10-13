@@ -130,9 +130,16 @@ uv run pytest -q
 실행 중 Supervisor의 결정(`🧭 Supervisor → market: 시장성 평가 결과 없음 → 실행`, 재작업은 🔁)과 에이전트 결과, 품질 평가 결과가 출력되고, 결정 로그는 `out/logs/{trace_id}.jsonl`, 트레이스는 LangSmith 프로젝트 `ai-investment-supervisor`에 남습니다. 웹 자료와 OpenAI 응답은 시점에 따라 달라질 수 있어 점수·순위가 실행마다 조금씩 다를 수 있습니다. 상세 안내: [기술 RAG](docs/tech_rag.md) · [시장·경쟁·투자 판단](docs/role3.md) · [보고서](docs/report_role4.md)
 
 ## Contributors
-
+### RAG
 - 신한수 : (예비군 훈련으로 인한 불참)
 - 안영준 : 보고서 생성 Agent 개발, LangGraph 통합, PDF 시각화, Score & Citation 검증, 통합 테스트
 - 정하윤 : 스타트업 탐색 Agent, 후보 순환·조건 분기 그래프, 후보 스타트업 선정·적격성 검증(국내 10 / 해외 10)
 - 손수경 : PDF & Web Parsing, 문서 Chunking, KURE/Jina모델 활용 Embedding, FAISS Retrieval, Technical Summary & Classification Agents개발
 - 손경락 : 기술 RAG 개선·검색 품질 평가, 시장성·경쟁사 비교·투자 판단 Agent 개발, 평가 기준 구현·순위 선정, 보고서 생성 Agent 수정, README 작성
+
+### Agent
+- 신한수 : State Schema 설계(제어/페이로드 분리, reducer, 종료 상한), SQLite 체크포인트·재개, trace_id 기반 결정 로그·LangSmith 추적 연동 및 트레이스 캡처
+- 안영준 : 보고서 Agent 확장(전체 평가 결과·Supervisor 평가 과정·품질 평가 페이지, 10장 이내), PDF 시각화, 통합 테스트, 제출물 패키징
+- 정하윤 : Supervisor Agent·그래프 설계(State 기반 `add_conditional_edges` 라우팅, 하위 에이전트 통신 제약, 종료 판단), Supervisor 그래프 Mermaid
+- 손수경 : 재작업용 재조사 검색(검색 범위 확대·한국어/한계/경쟁사 강점 검색어), 출처 다양성 확보, 검색 품질 지표(Hit Rate@K, MRR) 유지
+- 손경락 : 하위 Agent(기술·시장·경쟁사·투자 판단) Supervisor 연동, 근거 충분성 규칙·재작업 지시, 보고서 품질 평가 노드(규칙 + LLM Judge Hybrid)·미달 시 Loop, README 작성
